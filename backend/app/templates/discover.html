@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% from "components/paper_card.html" import paper_card %}
+{% block title %}Discover papers — Campus Research{% endblock %}
+{% block body %}
+<div class="shell">
+  {% include "partials/sidebar.html" %}
+  <main class="feed-main">
+    <header class="feed-header">
+      <h1 class="feed-title">Discover from OpenAlex</h1>
+      <p class="feed-lede">
+        Search and filter OpenAlex works. Matching items are normalized and saved to the shared catalog so they appear on
+        Home and in the API.
+      </p>
+    </header>
+
+    <section class="discover-panel" aria-labelledby="discover-form-heading">
+      <h2 id="discover-form-heading" class="discover-form-title">Search &amp; filters</h2>
+      <form class="auth-form discover-form" method="get" action="{{ url_for('web.discover') }}">
+        <label>
+          Keywords (title, abstract, fulltext)
+          <input type="search" name="q" value="{{ request.args.get('q', '') }}" placeholder="e.g. climate modeling" />
+        </label>
+        <label>
+          Title contains
+          <input type="text" name="title" value="{{ request.args.get('title', '') }}" />
+        </label>
+        <label>
+          Author name
+          <input type="text" name="author" value="{{ request.args.get('author', '') }}" placeholder="e.g. Smith" />
+        </label>
+        <label>
+          Concept ID (OpenAlex)
+          <input
+            type="text"
+            name="concept"
+            value="{{ request.args.get('concept', '') }}"
+            placeholder="C2776430406 or full https://openalex.org/C… URL"
+          />
+        </label>
+        <label>
+          Publication year
+          <input type="number" name="year" min="1500" max="2100" value="{{ request.args.get('year', '') }}" />
+        </label>
+        <label>
+          Open access
+          <select name="is_oa">
+            <option value="" {% if not request.args.get('is_oa') %}selected{% endif %}>Any</option>
+            <option value="true" {% if request.args.get('is_oa') == 'true' %}selected{% endif %}>Open access only</option>
+            <option value="false" {% if request.args.get('is_oa') == 'false' %}selected{% endif %}>Not OA</option>
+          </select>
+        </label>
+        <label>
+          Sort / rank
+          <select name="sort">
+            <option value="recency" {% if request.args.get('sort', 'recency') == 'recency' %}selected{% endif %}
+              >Recency</option
+            >
+            <option value="citations" {% if request.args.get('sort') == 'citations' %}selected{% endif %}
+              >Citation count</option
+            >
+            <option value="topic_match" {% if request.args.get('sort') == 'topic_match' %}selected{% endif %}
+              >Topic match / relevance (with keyword or title search)</option
+            >
+          </select>
+        </label>
+        <label>
+          Results per page
+          <input type="number" name="per_page" min="1" max="200" value="{{ request.args.get('per_page', '25') }}" />
+        </label>
+        <button type="submit" class="auth-button">Search &amp; ingest</button>
+      </form>
+      <p class="discover-hint">
+        API: <code>/api/v1/papers/discover</code> with the same query parameters (<code>GET</code>).
+      </p>
+    </section>
+
+    {% if error %}
+    <p class="auth-alert" role="alert">{{ error }}</p>
+    {% endif %}
+
+    {% if meta and meta.get('count') is not none %}
+    <p class="discover-meta">
+      OpenAlex reports <strong>{{ meta.count }}</strong> total matches for this query. This page ingested
+      <strong>{{ papers|length }}</strong> works.
+    </p>
+    {% endif %}
+
+    {% if next_url %}
+    <p class="discover-pagination">
+      <a class="discover-next" href="{{ next_url }}">Next page →</a>
+    </p>
+    {% endif %}
+
+    <div class="paper-feed" role="feed">
+      {% for paper in papers %}
+      {{ paper_card(paper, is_authenticated, paper.id in saved_ids) }}
+      {% else %}
+      {% if request.args.get('q')
+        or request.args.get('title')
+        or request.args.get('author')
+        or request.args.get('concept')
+        or request.args.get('year')
+        or request.args.get('is_oa')
+        or request.args.get('cursor') %}
+      {% if error is none %}
+      <p class="empty-state">No works returned for this query.</p>
+      {% endif %}
+      {% else %}
+      <p class="empty-state">Enter at least one filter or keyword above, then run Search &amp; ingest.</p>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </main>
+</div>
+{% endblock %}

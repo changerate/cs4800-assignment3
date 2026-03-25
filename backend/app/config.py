@@ -14,6 +14,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
+    # Optional: use the polite pool for OpenAlex (https://docs.openalex.org/)
+    OPENALEX_MAILTO = os.environ.get("OPENALEX_MAILTO") or None
 
 
 class DevelopmentConfig(Config):

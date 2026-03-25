@@ -7,13 +7,30 @@
     <p class="paper-kicker">{{ paper.topic }}</p>
     <h2 class="paper-title">{{ paper.title }}</h2>
     <p class="paper-summary">{{ paper.summary() }}</p>
-    {% if paper.venue or paper.published_at %}
+    {% if paper.venue or paper.published_at or paper.cited_by_count is not none %}
     <p class="paper-meta">
       {% if paper.venue %}<span>{{ paper.venue }}</span>{% endif -%}
       {%- if paper.published_at -%}
       <span class="paper-meta-sep">·</span>
       <time datetime="{{ paper.published_at.isoformat() }}">{{ paper.published_at.strftime("%b %Y") }}</time>
+      {%- endif -%}
+      {%- if paper.cited_by_count is not none -%}
+      <span class="paper-meta-sep">·</span>
+      <span>{{ paper.cited_by_count }} citations</span>
       {%- endif %}
+    </p>
+    {% endif %}
+    {% if paper.landing_url or paper.pdf_url %}
+    <p class="paper-external" aria-label="External links">
+      {% if paper.landing_url %}
+      <a class="paper-external-link" href="{{ paper.landing_url }}" rel="noopener noreferrer" target="_blank"
+        >Publisher page</a
+      >
+      {% endif %}
+      {% if paper.landing_url and paper.pdf_url %}<span class="paper-meta-sep">·</span>{% endif %}
+      {% if paper.pdf_url %}
+      <a class="paper-external-link" href="{{ paper.pdf_url }}" rel="noopener noreferrer" target="_blank">PDF</a>
+      {% endif %}
     </p>
     {% endif %}
     <div class="paper-actions" aria-label="Paper actions">

@@ -24,6 +24,6 @@ jobs:
               . backend/.venv/bin/activate
               pip install -r backend/requirements.txt
               export FLASK_APP=wsgi:application
-              cd backend && flask db upgrade && flask seed-papers
+              cd backend && flask db upgrade
             fi
             sudo systemctl restart flaskapp

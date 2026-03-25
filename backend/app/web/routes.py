@@ -1,11 +1,18 @@
 from urllib.parse import urlparse
 
-from flask import jsonify, redirect, render_template, request, session, url_for
+from flask import current_app, jsonify, redirect, render_template, request, session, url_for
 
 from app.auth_util import session_required_json
 from app.extensions import db
 from app.models import ResearchPaper, User
 from app.schemas import UserMeSchema
+from app.services.ingestion import ingest_openalex_works
+from app.services.openalex import (
+    OpenAlexError,
+    discover_params_from_request_args,
+    discovery_has_criteria,
+    fetch_openalex_works,
+)
 from app.web import bp
 
 me_schema = UserMeSchema()
@@ -100,6 +107,47 @@ def _related_papers(seed: ResearchPaper, limit: int = 8) -> list[ResearchPaper]:
         reverse=True,
     )
     return [paper for _, paper in scored[:limit]]
+
+
+@bp.get("/discover")
+def discover():
+    topics = _distinct_topics()
+    user = _get_authenticated_user()
+    saved_ids = _saved_paper_ids(user)
+    error = None
+    meta = None
+    papers: list[ResearchPaper] = []
+    next_url: str | None = None
+    params = discover_params_from_request_args(request.args)
+    if discovery_has_criteria(params):
+        try:
+            payload = fetch_openalex_works(
+                params,
+                mailto=current_app.config.get("OPENALEX_MAILTO"),
+            )
+            papers = ingest_openalex_works(payload.get("results") or [])
+            db.session.commit()
+            meta = payload.get("meta")
+            nc = meta.get("next_cursor") if isinstance(meta, dict) else None
+            if nc:
+                next_args = request.args.to_dict(flat=True)
+                next_args["cursor"] = nc
+                next_url = url_for("web.discover", **next_args)
+        except OpenAlexError as exc:
+            db.session.rollback()
+            error = str(exc)
+    return render_template(
+        "discover.html",
+        papers=papers,
+        topics=topics,
+        active_topic=None,
+        page="discover",
+        is_authenticated=user is not None,
+        saved_ids=saved_ids,
+        error=error,
+        meta=meta,
+        next_url=next_url,
+    )
 
 
 @bp.get("/")
