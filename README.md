@@ -1,72 +1,61 @@
-# Assignment 3 — Grid Social (Flask monolith)
+# Assignment 3 — Campus Research
 
-Classic Flask app: **Jinja + static assets** for the browser, a **versioned JSON API** under `/api/v1`, **session cookies** for the UI, and **SQLAlchemy + Alembic** for persistence. GitHub Actions can deploy to **AWS EC2** and restart the **`flaskapp`** systemd unit.
+Flask monolith for **browsing a shared catalog of academic papers** (titles, topic filters, abstract summaries). The UI is a Substack-style shell with a **left sidebar** (Home / Saved / Profile + interest filters) and a **vertically scrollable feed** of paper cards.
 
 ## Stack
 
-- **Flask 3** with an **application factory** (`create_app` in `backend/app/__init__.py`).
-- **Flask-SQLAlchemy**, **Flask-Migrate**, **Marshmallow** / **marshmallow-sqlalchemy**.
-- **SQLite** by default (`sqlite:///./app.db` → `app.db` next to the shell’s cwd; keep **`cd backend`** when developing). In production, set **`DATABASE_URL`** to your hosted database (PostgreSQL, MySQL, etc.) so data survives instance replacement.
-- **python-dotenv** loads `backend/.env` (see `backend/.env.example`).
-- **Gunicorn** is listed in `requirements.txt` for the EC2 service.
+- **Flask 3** with `create_app` (`backend/app/__init__.py`)
+- **Flask-SQLAlchemy**, **Flask-Migrate**, **Marshmallow**
+- **SQLite** locally (`sqlite:///./app.db` — run commands from **`backend/`**). Use **`DATABASE_URL`** in production for a hosted database
+- **python-dotenv** — see `backend/.env.example`
+- **Gunicorn** in `requirements.txt` for EC2/systemd
 
 ## Local setup
 
 ```bash
 cd backend
 python3 -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env        # set SECRET_KEY for anything beyond quick local tries
+cp .env.example .env   # set SECRET_KEY for non-toy use
 export FLASK_APP=wsgi:application
-flask db upgrade            # apply migrations
-flask seed-vehicles         # idempotent: adds default vehicle rows if missing
+flask db upgrade
+flask seed-papers     # mock catalog (idempotent if already filled)
 flask run --debug
 ```
 
-Open http://127.0.0.1:5000 — register, pick a vehicle, post to the grid, and watch **activity** + **feed** refresh via **polling** (no WebSockets).
+Open http://127.0.0.1:5000 — the home feed loads **papers from the database**. Use sidebar pills to filter by **topic**.
 
-### HTTP surface (basics)
+If you had an older database from a previous schema, delete `backend/app.db` and run `flask db upgrade && flask seed-papers` again.
 
-| Area | Method | Path | Notes |
-|------|--------|------|--------|
-| UI | GET | `/` | `index.html` shell |
-| Session | POST | `/login`, `/logout`, `/register` | JSON or form fields |
-| Session | GET | `/me` | Current user + vehicle |
-| Session | PUT | `/me/vehicle` | JSON `{ "vehicle_id": <int> \| null }` |
-| API v1 | GET | `/api/v1/posts`, `/api/v1/posts/<id>` | Grid + detail (detail logs activity when signed in) |
-| API v1 | POST | `/api/v1/posts` | Signed-in only |
-| API v1 | GET | `/api/v1/activity` | Recent activity stream |
-| API v1 | GET | `/api/v1/vehicles` | Vehicle picker data |
+### Routes
 
-## EC2 + systemd
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/` | Landing feed (`?topic=` optional) |
+| GET | `/saved`, `/profile` | Placeholder pages (same shell; no extra features in scope) |
+| GET | `/api/v1/papers` | JSON feed (`topic`, `limit`) |
+| GET | `/api/v1/papers/topics` | Distinct topics |
+| POST | `/login`, `/logout`, `/register` | Session auth (unchanged structure) |
+| GET | `/me` | Current user (JSON) |
 
-1. Clone the repo on the server (e.g. `/opt/grid-social`).
-2. Create `backend/.venv`, install `requirements.txt`, copy `backend/.env` with **`SECRET_KEY`**, **`DATABASE_URL`** (cloud DB), and **`FLASK_CONFIG=production`**.
-3. Run `flask db upgrade` and `flask seed-vehicles` from `backend/` with the venv activated.
-4. Install a systemd unit named **`flaskapp`**. See `deploy/flaskapp.service.example` — adjust **`User`**, **`WorkingDirectory`**, and paths to match your server.
-5. Put Nginx (or similar) in front of Gunicorn if you need TLS and static efficiency.
+## EC2 / Actions
 
-## GitHub Actions deploy
+GitHub Actions (`.github/workflows/deploy.yml`) SSHs to the server, pulls, runs `pip install`, `flask db upgrade`, and restarts **`flaskapp`**. After first deploy, run **`flask seed-papers`** once on the server if the catalog is empty.
 
-Workflow: `.github/workflows/deploy.yml` (SSH pull + `pip install` + `flask db upgrade` + `sudo systemctl restart flaskapp`).
-
-Repository secrets (example names — align with your workflow):
-
-- **`EC2_HOST`**, **`EC2_USER`**, **`EC2_SSH_KEY`**
-- **`EC2_APP_PATH`** — directory that contains `backend/` after `git clone` (repository root on the server)
+Example systemd unit: `deploy/flaskapp.service.example`.
 
 ## Layout
 
 ```
 backend/
   app/
-    api/v1/          # Blueprint: /api/v1
-    web/             # Blueprint: pages + session JSON routes
-    models/
+    models/          # User, ResearchPaper
     schemas/
-    templates/       # Jinja (main UI: index.html)
-    static/css/      # Styles
-  migrations/        # Alembic (committed)
-  wsgi.py            # `application` for Gunicorn
+    api/v1/          # /api/v1/papers
+    web/             # pages
+    templates/       # Jinja + components/
+    static/css/
+  migrations/
+  wsgi.py
 ```

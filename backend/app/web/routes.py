@@ -1,9 +1,8 @@
 from flask import jsonify, render_template, request, session
 
-from app.activity_log import log_activity
 from app.auth_util import session_required_json
 from app.extensions import db
-from app.models import User, Vehicle
+from app.models import ResearchPaper, User
 from app.schemas import UserMeSchema
 from app.web import bp
 
@@ -25,9 +24,66 @@ def _parse_credentials():
     )
 
 
+def _paper_feed_query(topic: str | None):
+    q = ResearchPaper.query
+    if topic:
+        q = q.filter(ResearchPaper.topic == topic)
+    return q.order_by(
+        ResearchPaper.published_at.desc(),
+        ResearchPaper.id.desc(),
+    )
+
+
+def _distinct_topics():
+    rows = (
+        ResearchPaper.query.with_entities(ResearchPaper.topic)
+        .distinct()
+        .order_by(ResearchPaper.topic.asc())
+        .all()
+    )
+    return [r[0] for r in rows]
+
+
 @bp.get("/")
 def index():
-    return render_template("index.html")
+    topic = (request.args.get("topic") or "").strip() or None
+    papers = _paper_feed_query(topic).all()
+    topics = _distinct_topics()
+    return render_template(
+        "index.html",
+        papers=papers,
+        topics=topics,
+        active_topic=topic,
+        page="home",
+    )
+
+
+@bp.get("/saved")
+def saved():
+    topics = _distinct_topics()
+    return render_template(
+        "index.html",
+        papers=[],
+        topics=topics,
+        active_topic=None,
+        page="saved",
+        placeholder_title="Saved",
+        placeholder_message="Sign-in based saving is not part of this build yet.",
+    )
+
+
+@bp.get("/profile")
+def profile():
+    topics = _distinct_topics()
+    return render_template(
+        "index.html",
+        papers=[],
+        topics=topics,
+        active_topic=None,
+        page="profile",
+        placeholder_title="Profile",
+        placeholder_message="Account settings will appear here in a future iteration.",
+    )
 
 
 @bp.post("/register")
@@ -47,7 +103,6 @@ def register():
     db.session.add(user)
     db.session.flush()
     session["user_id"] = user.id
-    log_activity("auth.register", f"{user.username} joined", user_id=user.id)
     db.session.commit()
     return jsonify({"user": me_schema.dump(user)}), 201
 
@@ -61,22 +116,13 @@ def login():
     if user is None or not user.check_password(password):
         return jsonify({"error": "invalid credentials"}), 401
     session["user_id"] = user.id
-    log_activity("auth.login", f"{user.username} signed in", user_id=user.id)
     db.session.commit()
     return jsonify({"user": me_schema.dump(user)})
 
 
 @bp.post("/logout")
 def logout():
-    uid = session.get("user_id")
-    label = None
-    if uid:
-        user = db.session.get(User, uid)
-        label = user.username if user else None
     session.clear()
-    if label:
-        log_activity("auth.logout", f"{label} signed out", user_id=None)
-        db.session.commit()
     return jsonify({"ok": True})
 
 
@@ -84,36 +130,4 @@ def logout():
 @session_required_json
 def me():
     user = User.query.get_or_404(session["user_id"])
-    return jsonify({"user": me_schema.dump(user)})
-
-
-@bp.put("/me/vehicle")
-@session_required_json
-def me_vehicle():
-    user = User.query.get_or_404(session["user_id"])
-    data = request.get_json(silent=True) or {}
-    raw = data.get("vehicle_id")
-    if raw is None:
-        user.vehicle_id = None
-        log_activity(
-            "vehicle.clear",
-            f"{user.username} cleared their vehicle",
-            user_id=user.id,
-        )
-    else:
-        try:
-            vid = int(raw)
-        except (TypeError, ValueError):
-            return jsonify({"error": "vehicle_id must be an integer or null"}), 400
-        if Vehicle.query.get(vid) is None:
-            return jsonify({"error": "unknown vehicle"}), 404
-        user.vehicle_id = vid
-        v = Vehicle.query.get(vid)
-        label = v.name if v else "a vehicle"
-        log_activity(
-            "vehicle.set",
-            f"{user.username} chose {label}",
-            user_id=user.id,
-        )
-    db.session.commit()
     return jsonify({"user": me_schema.dump(user)})

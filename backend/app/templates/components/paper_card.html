@@ -1,0 +1,21 @@
+{% macro paper_card(paper) %}
+<article class="paper-card">
+  <div class="paper-figure" role="presentation" aria-hidden="true">
+    <span class="paper-figure-label">Figure</span>
+  </div>
+  <div class="paper-content">
+    <p class="paper-kicker">{{ paper.topic }}</p>
+    <h2 class="paper-title">{{ paper.title }}</h2>
+    <p class="paper-summary">{{ paper.summary() }}</p>
+    {% if paper.venue or paper.published_at %}
+    <p class="paper-meta">
+      {% if paper.venue %}<span>{{ paper.venue }}</span>{% endif -%}
+      {%- if paper.published_at -%}
+      <span class="paper-meta-sep">·</span>
+      <time datetime="{{ paper.published_at.isoformat() }}">{{ paper.published_at.strftime("%b %Y") }}</time>
+      {%- endif %}
+    </p>
+    {% endif %}
+  </div>
+</article>
+{% endmacro %}

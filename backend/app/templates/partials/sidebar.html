@@ -1,0 +1,46 @@
+<aside class="sidebar" aria-label="Site">
+  <div class="sidebar-brand">
+    <a href="{{ url_for('web.index') }}" class="sidebar-brand-link">Campus Research</a>
+    <p class="sidebar-tagline">Papers worth your attention</p>
+  </div>
+
+  <nav class="sidebar-nav" aria-label="Primary">
+    <a
+      href="{{ url_for('web.index') }}"
+      class="sidebar-link {% if page == 'home' %}is-active{% endif %}"
+      >Home</a
+    >
+    <a
+      href="{{ url_for('web.saved') }}"
+      class="sidebar-link {% if page == 'saved' %}is-active{% endif %}"
+      >Saved</a
+    >
+    <a
+      href="{{ url_for('web.profile') }}"
+      class="sidebar-link {% if page == 'profile' %}is-active{% endif %}"
+      >Profile</a
+    >
+  </nav>
+
+  <section class="sidebar-filters" aria-labelledby="filter-heading">
+    <h2 id="filter-heading" class="sidebar-heading">Research interests</h2>
+    <ul class="filter-list">
+      <li>
+        <a
+          href="{{ url_for('web.index') }}"
+          class="filter-pill {% if not active_topic %}is-active{% endif %}"
+          >All topics</a
+        >
+      </li>
+      {% for topic in topics %}
+      <li>
+        <a
+          href="{{ url_for('web.index', topic=topic) }}"
+          class="filter-pill {% if active_topic == topic %}is-active{% endif %}"
+          >{{ topic }}</a
+        >
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+</aside>
