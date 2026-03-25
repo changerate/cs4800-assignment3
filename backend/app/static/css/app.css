@@ -121,6 +121,16 @@ code {
   font-weight: 600;
 }
 
+.icon-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.icon-label .bi {
+  font-size: 0.95em;
+}
+
 .filter-list {
   list-style: none;
   margin: 0;
@@ -312,6 +322,10 @@ code {
   padding: 0.38rem 0.72rem;
   text-decoration: none;
   cursor: pointer;
+}
+
+.paper-action-button .icon-label {
+  gap: 0.35rem;
 }
 
 .paper-action-button.secondary {
