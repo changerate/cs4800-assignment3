@@ -15,11 +15,19 @@
       class="sidebar-link {% if page == 'saved' %}is-active{% endif %}"
       >Saved</a
     >
+    {% if is_authenticated %}
     <a
       href="{{ url_for('web.profile') }}"
       class="sidebar-link {% if page == 'profile' %}is-active{% endif %}"
       >Profile</a
     >
+    {% else %}
+    <a
+      href="{{ url_for('web.auth_page') }}"
+      class="sidebar-link {% if page == 'auth' %}is-active{% endif %}"
+      >Signup/Login</a
+    >
+    {% endif %}
   </nav>
 
   <section class="sidebar-filters" aria-labelledby="filter-heading">

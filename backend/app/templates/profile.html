@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Profile · Campus Research{% endblock %}
+{% block body %}
+<div class="shell">
+  {% include "partials/sidebar.html" %}
+  <main class="feed-main">
+    <header class="profile-header">
+      <p class="profile-eyebrow">Your account</p>
+      <h1 class="feed-title">Profile</h1>
+      <p class="feed-lede">
+        You are signed in as <strong>{{ user.username }}</strong>.
+      </p>
+    </header>
+
+    <section class="profile-grid" aria-label="Profile details">
+      <article class="profile-card">
+        <h2 class="profile-card-title">Account details</h2>
+        <dl class="profile-details">
+          <div class="profile-detail">
+            <dt>Username</dt>
+            <dd>{{ user.username }}</dd>
+          </div>
+          <div class="profile-detail">
+            <dt>Email</dt>
+            <dd>{{ user.email }}</dd>
+          </div>
+          <div class="profile-detail">
+            <dt>Member since</dt>
+            <dd>{{ user.created_at.strftime('%B %d, %Y') }}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="profile-card">
+        <h2 class="profile-card-title">Session</h2>
+        <p class="profile-muted">
+          Sign out on shared computers to keep your account secure.
+        </p>
+        <form method="post" action="{{ url_for('web.logout_page') }}">
+          <button type="submit" class="profile-signout-button">Sign out</button>
+        </form>
+      </article>
+    </section>
+  </main>
+</div>
+{% endblock %}
