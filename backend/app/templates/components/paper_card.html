@@ -1,10 +1,32 @@
 {% macro paper_card(paper, is_authenticated=False, is_saved=False) %}
+{% set fig_h = (paper.id * 37) % 360 %}
+{% set fig_h2 = (paper.id * 37 + 28) % 360 %}
+{% set bar_heights = [72, 48, 88, 56, 68] %}
 <article class="paper-card">
-  <div class="paper-figure" role="presentation" aria-hidden="true">
-    <span class="paper-figure-label">Figure</span>
+  <div
+    class="paper-figure"
+    style="--paper-figure-hue: {{ fig_h }}; --paper-figure-hue-2: {{ fig_h2 }};"
+    role="presentation"
+    aria-hidden="true"
+  >
+    <div class="paper-figure-shine" aria-hidden="true"></div>
+    <div class="paper-figure-grid" aria-hidden="true"></div>
+    <div class="paper-figure-panel" aria-hidden="true">
+      <div class="paper-figure-bars">
+        {% for i in range(5) %}
+        <span
+          class="paper-figure-bar"
+          style="--bar-h: {{ bar_heights[(paper.id + i) % 5] }}%;"
+        ></span>
+        {% endfor %}
+      </div>
+      <div class="paper-figure-curve" aria-hidden="true"></div>
+    </div>
+    <span class="paper-figure-tag">{{ paper.topic }}</span>
+    <span class="paper-figure-label">Fig.</span>
   </div>
   <div class="paper-content">
-    <p class="paper-kicker">{{ paper.topic }}</p>
+    <p class="sr-only">{{ paper.topic }}</p>
     <h2 class="paper-title">{{ paper.title }}</h2>
     <p class="paper-summary">{{ paper.summary() }}</p>
     {% if paper.venue or paper.published_at or paper.cited_by_count is not none %}
