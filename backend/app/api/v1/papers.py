@@ -1,5 +1,5 @@
 from flask import current_app, jsonify, request
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from app.api.v1 import bp
 from app.extensions import db
@@ -19,12 +19,31 @@ schemas = ResearchPaperSchema(many=True)
 @bp.get("/papers")
 def list_papers():
     topic = (request.args.get("topic") or "").strip()
+    field = (request.args.get("field") or "").strip()
+    raw_sub = (request.args.get("subfield") or "").strip()
+    subfield_unclassified = raw_sub == "_none"
+    subfield = None if subfield_unclassified or not raw_sub else raw_sub
     sort = (request.args.get("sort") or "recency").strip().lower()
     if sort not in {"recency", "citations"}:
         sort = "recency"
     q = ResearchPaper.query
     if topic:
         q = q.filter(ResearchPaper.topic == topic)
+    elif subfield_unclassified and field:
+        q = q.filter(
+            ResearchPaper.topic_field == field,
+            or_(
+                ResearchPaper.topic_subfield.is_(None),
+                ResearchPaper.topic_subfield == "",
+            ),
+        )
+    elif subfield and field:
+        q = q.filter(
+            ResearchPaper.topic_field == field,
+            ResearchPaper.topic_subfield == subfield,
+        )
+    elif field:
+        q = q.filter(ResearchPaper.topic_field == field)
     if sort == "citations":
         q = q.order_by(
             func.coalesce(ResearchPaper.cited_by_count, -1).desc(),

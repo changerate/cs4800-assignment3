@@ -299,6 +299,15 @@ def normalize_openalex_work(work: dict[str, Any]) -> dict[str, Any]:
         topic_label = "Uncategorized"
     topic_label = topic_label[:120]
 
+    topic_field: str | None = None
+    topic_subfield: str | None = None
+    fld = primary_topic.get("field")
+    subf = primary_topic.get("subfield")
+    if isinstance(fld, dict):
+        topic_field = ((fld.get("display_name") or "").strip()[:120] or None)
+    if isinstance(subf, dict):
+        topic_subfield = ((subf.get("display_name") or "").strip()[:120] or None)
+
     cited = work.get("cited_by_count")
     try:
         cited_by_count = int(cited) if cited is not None else None
@@ -313,6 +322,8 @@ def normalize_openalex_work(work: dict[str, Any]) -> dict[str, Any]:
         "abstract": abs_text,
         "feed_summary": feed_summary,
         "topic": topic_label,
+        "topic_field": topic_field,
+        "topic_subfield": topic_subfield,
         "venue": venue or None,
         "published_at": published_at,
         "doi": normalize_doi(work.get("doi")),

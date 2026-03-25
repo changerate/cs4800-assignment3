@@ -12,6 +12,15 @@
         {% elif active_topic %}
         Showing <strong>{{ active_topic }}</strong> highlights from the shared
         catalog. <a href="{{ url_for('web.index') }}">Clear filter</a>.
+        {% elif filter_field and filter_subfield_other %}
+        Showing papers in <strong>{{ filter_field }}</strong> with a general catalog label
+        (no specific sub-area). <a href="{{ url_for('web.index') }}">Clear filter</a>.
+        {% elif filter_field and filter_subfield %}
+        Showing <strong>{{ filter_subfield }}</strong> within {{ filter_field }}.
+        <a href="{{ url_for('web.index') }}">Clear filter</a>.
+        {% elif filter_field %}
+        Showing all papers grouped under <strong>{{ filter_field }}</strong>.
+        <a href="{{ url_for('web.index') }}">Clear filter</a>.
         {% else %}
         Scroll through recently indexed papers curated for undergrad and graduate readers.
         {% endif %}

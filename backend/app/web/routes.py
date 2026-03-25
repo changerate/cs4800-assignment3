@@ -1,6 +1,7 @@
 from urllib.parse import urlparse
 
 from flask import current_app, jsonify, redirect, render_template, request, session, url_for
+from sqlalchemy import or_
 
 from app.auth_util import session_required_json
 from app.extensions import db
@@ -16,6 +17,9 @@ from app.services.openalex import (
 from app.web import bp
 
 me_schema = UserMeSchema()
+
+# Subfield query value for papers with no OpenAlex subfield (filter within a field).
+SUBFIELD_NONE_PARAM = "_none"
 
 
 def _parse_credentials():
@@ -51,24 +55,82 @@ def _is_safe_next(next_url: str | None) -> bool:
     return parsed.scheme == "" and parsed.netloc == "" and next_url.startswith("/")
 
 
-def _paper_feed_query(topic: str | None):
+def _paper_feed_query(
+    topic: str | None = None,
+    field: str | None = None,
+    subfield: str | None = None,
+    subfield_unclassified: bool = False,
+):
     q = ResearchPaper.query
     if topic:
         q = q.filter(ResearchPaper.topic == topic)
+    elif subfield_unclassified and field:
+        q = q.filter(
+            ResearchPaper.topic_field == field,
+            or_(
+                ResearchPaper.topic_subfield.is_(None),
+                ResearchPaper.topic_subfield == "",
+            ),
+        )
+    elif subfield and field:
+        q = q.filter(
+            ResearchPaper.topic_field == field,
+            ResearchPaper.topic_subfield == subfield,
+        )
+    elif field:
+        q = q.filter(ResearchPaper.topic_field == field)
     return q.order_by(
         ResearchPaper.published_at.desc(),
         ResearchPaper.id.desc(),
     )
 
 
-def _distinct_topics():
+def _topic_area_tree() -> list[tuple[str, list[tuple[str, list[str]]]]]:
+    """Field → (subfield key, topic names) for sidebar filters; sub key _none = broad/unspecified."""
+    from collections import defaultdict
+
     rows = (
-        ResearchPaper.query.with_entities(ResearchPaper.topic)
-        .distinct()
-        .order_by(ResearchPaper.topic.asc())
+        ResearchPaper.query.with_entities(
+            ResearchPaper.topic_field,
+            ResearchPaper.topic_subfield,
+            ResearchPaper.topic,
+        )
+        .filter(ResearchPaper.topic_field.isnot(None))
         .all()
     )
-    return [r[0] for r in rows]
+    by_sub: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
+    other: dict[str, set[str]] = defaultdict(set)
+    for f, sf, t in rows:
+        if not t:
+            continue
+        if sf:
+            by_sub[f][sf].add(t)
+        else:
+            other[f].add(t)
+    out: list[tuple[str, list[tuple[str, list[str]]]]] = []
+    all_fields = set(by_sub.keys()) | set(other.keys())
+    for f in sorted(all_fields):
+        subs: list[tuple[str, list[str]]] = []
+        for sf in sorted(by_sub.get(f, {}).keys()):
+            subs.append((sf, sorted(by_sub[f][sf])))
+        if other.get(f):
+            subs.append((SUBFIELD_NONE_PARAM, sorted(other[f])))
+        out.append((f, subs))
+    return out
+
+
+def _sidebar_topics_context(
+    *,
+    sidebar_open_field: str | None = None,
+    sidebar_open_subfield: str | None = None,
+    active_topic: str | None = None,
+) -> dict:
+    return {
+        "topic_areas": _topic_area_tree(),
+        "sidebar_open_field": sidebar_open_field,
+        "sidebar_open_subfield": sidebar_open_subfield,
+        "active_topic": active_topic,
+    }
 
 
 def _saved_paper_ids(user: User | None) -> set[int]:
@@ -111,7 +173,6 @@ def _related_papers(seed: ResearchPaper, limit: int = 8) -> list[ResearchPaper]:
 
 @bp.get("/discover")
 def discover():
-    topics = _distinct_topics()
     user = _get_authenticated_user()
     saved_ids = _saved_paper_ids(user)
     error = None
@@ -139,8 +200,7 @@ def discover():
     return render_template(
         "discover.html",
         papers=papers,
-        topics=topics,
-        active_topic=None,
+        **_sidebar_topics_context(),
         page="discover",
         is_authenticated=user is not None,
         saved_ids=saved_ids,
@@ -153,15 +213,51 @@ def discover():
 @bp.get("/")
 def index():
     topic = (request.args.get("topic") or "").strip() or None
-    papers = _paper_feed_query(topic).all()
-    topics = _distinct_topics()
+    field = (request.args.get("field") or "").strip() or None
+    raw_sub = (request.args.get("subfield") or "").strip()
+    subfield_unclassified = raw_sub == SUBFIELD_NONE_PARAM
+    subfield = None if subfield_unclassified or not raw_sub else raw_sub
+
+    sidebar_open_field = field
+    sidebar_open_subfield = (
+        SUBFIELD_NONE_PARAM if subfield_unclassified else subfield
+    )
+    if topic and not field and not raw_sub:
+        hint = (
+            ResearchPaper.query.with_entities(
+                ResearchPaper.topic_field,
+                ResearchPaper.topic_subfield,
+            )
+            .filter(ResearchPaper.topic == topic)
+            .first()
+        )
+        if hint:
+            hf, hs = hint
+            sidebar_open_field = hf
+            if hf and not hs:
+                sidebar_open_subfield = SUBFIELD_NONE_PARAM
+            else:
+                sidebar_open_subfield = hs
+
+    papers = _paper_feed_query(
+        topic=topic,
+        field=None if topic else field,
+        subfield=None if topic else subfield,
+        subfield_unclassified=False if topic else subfield_unclassified,
+    ).all()
     user = _get_authenticated_user()
     saved_ids = _saved_paper_ids(user)
     return render_template(
         "index.html",
         papers=papers,
-        topics=topics,
-        active_topic=topic,
+        **_sidebar_topics_context(
+            sidebar_open_field=sidebar_open_field,
+            sidebar_open_subfield=sidebar_open_subfield,
+            active_topic=topic,
+        ),
+        filter_field=field,
+        filter_subfield=subfield,
+        filter_subfield_other=subfield_unclassified,
         page="home",
         is_authenticated=user is not None,
         saved_ids=saved_ids,
@@ -171,7 +267,6 @@ def index():
 
 @bp.get("/saved")
 def saved():
-    topics = _distinct_topics()
     user = _get_authenticated_user()
     if user is None:
         return redirect(url_for("web.auth_page", next=request.path))
@@ -184,8 +279,10 @@ def saved():
     return render_template(
         "index.html",
         papers=papers,
-        topics=topics,
-        active_topic=None,
+        **_sidebar_topics_context(),
+        filter_field=None,
+        filter_subfield=None,
+        filter_subfield_other=False,
         page="saved",
         is_authenticated=True,
         saved_ids=saved_ids,
@@ -222,15 +319,16 @@ def unsave_paper(paper_id: int):
 @bp.get("/papers/<int:paper_id>/related")
 def show_related(paper_id: int):
     seed = ResearchPaper.query.get_or_404(paper_id)
-    topics = _distinct_topics()
     user = _get_authenticated_user()
     papers = _related_papers(seed)
     saved_ids = _saved_paper_ids(user)
     return render_template(
         "index.html",
         papers=papers,
-        topics=topics,
-        active_topic=None,
+        **_sidebar_topics_context(),
+        filter_field=None,
+        filter_subfield=None,
+        filter_subfield_other=False,
         page="home",
         is_authenticated=user is not None,
         saved_ids=saved_ids,
@@ -248,11 +346,9 @@ def profile():
     user = _get_authenticated_user()
     if user is None:
         return redirect(url_for("web.auth_page", next=request.path))
-    topics = _distinct_topics()
     return render_template(
         "profile.html",
-        topics=topics,
-        active_topic=None,
+        **_sidebar_topics_context(),
         page="profile",
         user=user,
         is_authenticated=True,
@@ -264,7 +360,6 @@ def auth_page():
     user = _get_authenticated_user()
     if user is not None:
         return redirect(url_for("web.profile"))
-    topics = _distinct_topics()
     mode = (request.args.get("mode") or "login").strip().lower()
     if mode not in {"login", "signup"}:
         mode = "login"
@@ -278,8 +373,7 @@ def auth_page():
         info = "You have been signed out."
     return render_template(
         "auth.html",
-        topics=topics,
-        active_topic=None,
+        **_sidebar_topics_context(),
         page="auth",
         is_authenticated=False,
         mode=mode,
@@ -296,12 +390,10 @@ def auth_page():
 def signup():
     username, email, password = _parse_credentials()
     if not username or not email or len(password) < 6:
-        topics = _distinct_topics()
         return (
             render_template(
                 "auth.html",
-                topics=topics,
-                active_topic=None,
+                **_sidebar_topics_context(),
                 page="auth",
                 is_authenticated=False,
                 mode="signup",
@@ -317,12 +409,10 @@ def signup():
     if User.query.filter(
         (User.username == username) | (User.email == email)
     ).first():
-        topics = _distinct_topics()
         return (
             render_template(
                 "auth.html",
-                topics=topics,
-                active_topic=None,
+                **_sidebar_topics_context(),
                 page="auth",
                 is_authenticated=False,
                 mode="signup",
@@ -349,12 +439,10 @@ def login_page():
     if not _is_safe_next(next_path):
         next_path = ""
     if not username or not password:
-        topics = _distinct_topics()
         return (
             render_template(
                 "auth.html",
-                topics=topics,
-                active_topic=None,
+                **_sidebar_topics_context(),
                 page="auth",
                 is_authenticated=False,
                 mode="login",
@@ -369,12 +457,10 @@ def login_page():
         )
     user = User.query.filter_by(username=username).first()
     if user is None or not user.check_password(password):
-        topics = _distinct_topics()
         return (
             render_template(
                 "auth.html",
-                topics=topics,
-                active_topic=None,
+                **_sidebar_topics_context(),
                 page="auth",
                 is_authenticated=False,
                 mode="login",

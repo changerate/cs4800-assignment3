@@ -11,6 +11,8 @@ _CANONICAL_FIELDS = frozenset(
         "abstract",
         "feed_summary",
         "topic",
+        "topic_field",
+        "topic_subfield",
         "venue",
         "published_at",
         "doi",

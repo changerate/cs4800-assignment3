@@ -20,6 +20,8 @@ class ResearchPaper(db.Model):
     title = db.Column(db.String(500), nullable=False)
     abstract = db.Column(db.Text, nullable=False)
     topic = db.Column(db.String(120), nullable=False, index=True)
+    topic_field = db.Column(db.String(120), nullable=True, index=True)
+    topic_subfield = db.Column(db.String(120), nullable=True)
     venue = db.Column(db.String(200), nullable=True)
     published_at = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

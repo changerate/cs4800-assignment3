@@ -162,6 +162,131 @@ code {
   color: #fff;
 }
 
+.sidebar-filters-intro {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin: -0.35rem 0 0.65rem;
+  line-height: 1.35;
+}
+
+.filter-area-group {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-bottom: 0.45rem;
+  background: #fafaf8;
+}
+
+.filter-area-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.filter-area-summary::-webkit-details-marker {
+  display: none;
+}
+
+.filter-area-title {
+  flex: 1;
+}
+
+.filter-area-body {
+  padding: 0 0.5rem 0.55rem 0.65rem;
+  border-top: 1px solid var(--line);
+}
+
+.filter-area-chevron {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+  margin-top: -0.15rem;
+}
+
+.filter-area-chevron--small {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-width: 1.5px;
+}
+
+.filter-area-group[open] > .filter-area-summary .filter-area-chevron {
+  transform: rotate(45deg);
+  margin-top: 0.1rem;
+}
+
+.filter-subgroup {
+  margin-top: 0.4rem;
+  padding-left: 0.35rem;
+  border-left: 2px solid #e5e5e0;
+}
+
+.filter-subgroup-summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.28rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.filter-subgroup-summary::-webkit-details-marker {
+  display: none;
+}
+
+.filter-subgroup[open] > .filter-subgroup-summary .filter-area-chevron {
+  transform: rotate(45deg);
+  margin-top: 0.08rem;
+}
+
+.filter-subgroup-title {
+  flex: 1;
+}
+
+.filter-scope-link {
+  display: block;
+  font-size: 0.76rem;
+  margin: 0.35rem 0 0.25rem;
+  color: var(--muted);
+  text-decoration: none;
+  line-height: 1.3;
+}
+
+.filter-scope-link:hover {
+  text-decoration: underline;
+  color: var(--text);
+}
+
+.filter-scope-link.is-active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.filter-topic-list {
+  list-style: none;
+  margin: 0.2rem 0 0.35rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.filter-pill-topic {
+  font-size: 0.72rem;
+  line-height: 1.3;
+  white-space: normal;
+}
+
 .feed-main {
   flex: 1;
   padding: 2.25rem clamp(1.25rem, 4vw, 3rem) 3rem;
