@@ -16,6 +16,12 @@ class ResearchPaper(db.Model):
     venue = db.Column(db.String(200), nullable=True)
     published_at = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    saved_by_users = db.relationship(
+        "User",
+        secondary="user_saved_papers",
+        back_populates="saved_papers",
+        lazy="selectin",
+    )
 
     def summary(self, max_len: int = 220) -> str:
         """Short teaser from the abstract (word-safe truncation)."""

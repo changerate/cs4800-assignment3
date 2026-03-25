@@ -4,38 +4,39 @@
 <div class="shell">
   {% include "partials/sidebar.html" %}
   <main class="feed-main">
-    {% if page == "home" %}
     <header class="feed-header">
-      <h1 class="feed-title">Latest in the literature</h1>
+      <h1 class="feed-title">{{ feed_title or "Latest in the literature" }}</h1>
       <p class="feed-lede">
-        {% if active_topic %}
+        {% if feed_lede %}
+        {{ feed_lede }}
+        {% elif active_topic %}
         Showing <strong>{{ active_topic }}</strong> highlights from the shared
         catalog. <a href="{{ url_for('web.index') }}">Clear filter</a>.
         {% else %}
         Scroll through recently indexed papers curated for undergrad and graduate readers.
         {% endif %}
       </p>
+      {% if related_source %}
+      <p class="feed-related-source">
+        Based on <em>{{ related_source.title }}</em>.
+        <a href="{{ url_for('web.index') }}">Back to latest feed</a>
+      </p>
+      {% endif %}
     </header>
     <div class="paper-feed" role="feed">
       {% for paper in papers %}
-      {{ paper_card(paper) }}
+      {{ paper_card(paper, is_authenticated, paper.id in saved_ids) }}
       {% else %}
       <p class="empty-state">
+        {% if related_source %}
+        No similar papers found for this item yet. Try another paper from
+        <a href="{{ url_for('web.index') }}">the home feed</a>.
+        {% else %}
         No papers loaded yet — run <code>flask seed-papers</code> from the backend folder after migrating.
+        {% endif %}
       </p>
       {% endfor %}
     </div>
-    {% else %}
-    <header class="feed-header">
-      <h1 class="feed-title">{{ placeholder_title }}</h1>
-      <p class="feed-lede">{{ placeholder_message }}</p>
-    </header>
-    <div class="paper-feed subtle">
-      <p class="empty-state">
-        Return to <a href="{{ url_for('web.index') }}">Home</a> to keep browsing the feed.
-      </p>
-    </div>
-    {% endif %}
   </main>
 </div>
 {% endblock %}

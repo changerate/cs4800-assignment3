@@ -176,6 +176,12 @@ code {
   font-size: 0.98rem;
 }
 
+.feed-related-source {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
 .paper-feed {
   display: flex;
   flex-direction: column;
@@ -282,6 +288,41 @@ code {
 
 .paper-meta-sep {
   margin: 0 0.3rem;
+}
+
+.paper-actions {
+  margin-top: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.paper-actions form {
+  margin: 0;
+}
+
+.paper-action-button {
+  border: 1px solid #1d1d1f;
+  border-radius: 999px;
+  background: #1d1d1f;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 0.38rem 0.72rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.paper-action-button.secondary {
+  background: transparent;
+  color: var(--text);
+  border-color: #cdcdc7;
+}
+
+.paper-action-button:hover {
+  opacity: 0.92;
+  text-decoration: none;
 }
 
 .empty-state {

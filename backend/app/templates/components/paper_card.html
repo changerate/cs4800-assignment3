@@ -1,4 +1,4 @@
-{% macro paper_card(paper) %}
+{% macro paper_card(paper, is_authenticated=False, is_saved=False) %}
 <article class="paper-card">
   <div class="paper-figure" role="presentation" aria-hidden="true">
     <span class="paper-figure-label">Figure</span>
@@ -16,6 +16,28 @@
       {%- endif %}
     </p>
     {% endif %}
+    <div class="paper-actions" aria-label="Paper actions">
+      <a class="paper-action-button secondary" href="{{ url_for('web.show_related', paper_id=paper.id) }}"
+        >Show related</a
+      >
+      {% if is_authenticated %}
+      {% if is_saved %}
+      <form method="post" action="{{ url_for('web.unsave_paper', paper_id=paper.id) }}">
+        <button type="submit" class="paper-action-button">Unsave</button>
+      </form>
+      {% else %}
+      <form method="post" action="{{ url_for('web.save_paper', paper_id=paper.id) }}">
+        <button type="submit" class="paper-action-button">Save</button>
+      </form>
+      {% endif %}
+      {% else %}
+      <a
+        class="paper-action-button"
+        href="{{ url_for('web.auth_page', mode='login', next=request.path) }}"
+        >Log in to save</a
+      >
+      {% endif %}
+    </div>
   </div>
 </article>
 {% endmacro %}

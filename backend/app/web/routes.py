@@ -64,12 +64,51 @@ def _distinct_topics():
     return [r[0] for r in rows]
 
 
+def _saved_paper_ids(user: User | None) -> set[int]:
+    if user is None:
+        return set()
+    return {paper.id for paper in user.saved_papers}
+
+
+def _tokenize(text: str) -> set[str]:
+    tokens = []
+    for raw in (text or "").lower().split():
+        cleaned = "".join(ch for ch in raw if ch.isalnum())
+        if len(cleaned) >= 3:
+            tokens.append(cleaned)
+    return set(tokens)
+
+
+def _related_papers(seed: ResearchPaper, limit: int = 8) -> list[ResearchPaper]:
+    seed_tokens = _tokenize(f"{seed.title} {seed.abstract} {seed.topic} {seed.venue or ''}")
+    all_papers = ResearchPaper.query.filter(ResearchPaper.id != seed.id).all()
+    scored = []
+    for paper in all_papers:
+        tokens = _tokenize(f"{paper.title} {paper.abstract} {paper.topic} {paper.venue or ''}")
+        overlap = len(seed_tokens & tokens)
+        topic_bonus = 8 if paper.topic == seed.topic else 0
+        venue_bonus = 3 if seed.venue and paper.venue == seed.venue else 0
+        score = overlap + topic_bonus + venue_bonus
+        if score > 0:
+            scored.append((score, paper))
+    scored.sort(
+        key=lambda entry: (
+            entry[0],
+            entry[1].published_at.isoformat() if entry[1].published_at else "",
+            entry[1].id,
+        ),
+        reverse=True,
+    )
+    return [paper for _, paper in scored[:limit]]
+
+
 @bp.get("/")
 def index():
     topic = (request.args.get("topic") or "").strip() or None
     papers = _paper_feed_query(topic).all()
     topics = _distinct_topics()
     user = _get_authenticated_user()
+    saved_ids = _saved_paper_ids(user)
     return render_template(
         "index.html",
         papers=papers,
@@ -77,6 +116,8 @@ def index():
         active_topic=topic,
         page="home",
         is_authenticated=user is not None,
+        saved_ids=saved_ids,
+        related_source=None,
     )
 
 
@@ -84,15 +125,73 @@ def index():
 def saved():
     topics = _distinct_topics()
     user = _get_authenticated_user()
+    if user is None:
+        return redirect(url_for("web.auth_page", next=request.path))
+    papers = sorted(
+        user.saved_papers,
+        key=lambda p: (p.published_at or p.created_at.date(), p.id),
+        reverse=True,
+    )
+    saved_ids = _saved_paper_ids(user)
     return render_template(
         "index.html",
-        papers=[],
+        papers=papers,
         topics=topics,
         active_topic=None,
         page="saved",
-        placeholder_title="Saved",
-        placeholder_message="Sign-in based saving is not part of this build yet.",
+        is_authenticated=True,
+        saved_ids=saved_ids,
+        related_source=None,
+        feed_title="Saved papers",
+        feed_lede="Your bookmarked papers are listed here. Remove any item with Unsave.",
+    )
+
+
+@bp.post("/papers/<int:paper_id>/save")
+def save_paper(paper_id: int):
+    user = _get_authenticated_user()
+    if user is None:
+        return redirect(url_for("web.auth_page", next=request.referrer or url_for("web.index")))
+    paper = ResearchPaper.query.get_or_404(paper_id)
+    if paper not in user.saved_papers:
+        user.saved_papers.append(paper)
+        db.session.commit()
+    return redirect(request.referrer or url_for("web.index"))
+
+
+@bp.post("/papers/<int:paper_id>/unsave")
+def unsave_paper(paper_id: int):
+    user = _get_authenticated_user()
+    if user is None:
+        return redirect(url_for("web.auth_page", next=request.referrer or url_for("web.index")))
+    paper = ResearchPaper.query.get_or_404(paper_id)
+    if paper in user.saved_papers:
+        user.saved_papers.remove(paper)
+        db.session.commit()
+    return redirect(request.referrer or url_for("web.index"))
+
+
+@bp.get("/papers/<int:paper_id>/related")
+def show_related(paper_id: int):
+    seed = ResearchPaper.query.get_or_404(paper_id)
+    topics = _distinct_topics()
+    user = _get_authenticated_user()
+    papers = _related_papers(seed)
+    saved_ids = _saved_paper_ids(user)
+    return render_template(
+        "index.html",
+        papers=papers,
+        topics=topics,
+        active_topic=None,
+        page="home",
         is_authenticated=user is not None,
+        saved_ids=saved_ids,
+        related_source=seed,
+        feed_title=f"Related to: {seed.title}",
+        feed_lede=(
+            "Showing faux-vectorized recommendations using topic match, venue match, "
+            "and keyword overlap."
+        ),
     )
 
 
