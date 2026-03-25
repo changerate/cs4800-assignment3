@@ -1,112 +1,117 @@
 {% extends "base.html" %}
 {% from "components/paper_card.html" import paper_card %}
-{% block title %}Discover papers — Campus Research{% endblock %}
+{% block title %}Discover — Campus Research{% endblock %}
 {% block body %}
 <div class="shell">
   {% include "partials/sidebar.html" %}
-  <main class="feed-main">
-    <header class="feed-header">
-      <h1 class="feed-title">Discover from OpenAlex</h1>
-      <p class="feed-lede">
-        Search and filter OpenAlex works. Matching items are normalized and saved to the shared catalog so they appear on
-        Home and in the API.
-      </p>
+  <main class="feed-main discover-page">
+    <header class="feed-header discover-header">
+      <h1 class="feed-title">Discover</h1>
+      <p class="feed-lede">Find works in OpenAlex and save them to the catalog (same rows as Home and the JSON API).</p>
     </header>
 
-    <section class="discover-panel" aria-labelledby="discover-form-heading">
-      <h2 id="discover-form-heading" class="discover-form-title">Search &amp; filters</h2>
-      <form class="auth-form discover-form" method="get" action="{{ url_for('web.discover') }}">
-        <label>
-          Keywords (title, abstract, fulltext)
-          <input type="search" name="q" value="{{ request.args.get('q', '') }}" placeholder="e.g. climate modeling" />
+    <section class="discover-panel" aria-labelledby="discover-filters-label">
+      <h2 id="discover-filters-label" class="discover-form-title">Filters</h2>
+      <p class="discover-intro">Use at least one field below, then submit. Duplicates are skipped when the OpenAlex work ID or DOI already exists.</p>
+
+      <form class="auth-form discover-form" method="get" action="{{ url_for('web.discover') }}" novalidate>
+        <label class="discover-field discover-field--wide">
+          <span class="discover-field-label">Keywords</span>
+          <span class="discover-field-hint">Matches title, abstract, or full text in OpenAlex</span>
+          <input type="search" name="q" value="{{ request.args.get('q', '') }}" placeholder="e.g. protein folding" autocomplete="off" />
         </label>
-        <label>
-          Title contains
-          <input type="text" name="title" value="{{ request.args.get('title', '') }}" />
+
+        <label class="discover-field">
+          <span class="discover-field-label">Title contains</span>
+          <input type="text" name="title" value="{{ request.args.get('title', '') }}" autocomplete="off" />
         </label>
-        <label>
-          Author name
-          <input type="text" name="author" value="{{ request.args.get('author', '') }}" placeholder="e.g. Smith" />
+
+        <label class="discover-field">
+          <span class="discover-field-label">Author</span>
+          <input type="text" name="author" value="{{ request.args.get('author', '') }}" placeholder="Last or full name" autocomplete="off" />
         </label>
-        <label>
-          Concept ID (OpenAlex)
+
+        <label class="discover-field discover-field--wide">
+          <span class="discover-field-label">Concept</span>
+          <span class="discover-field-hint">OpenAlex concept ID or full URL</span>
           <input
             type="text"
             name="concept"
             value="{{ request.args.get('concept', '') }}"
-            placeholder="C2776430406 or full https://openalex.org/C… URL"
+            placeholder="C2776430406"
+            autocomplete="off"
           />
         </label>
-        <label>
-          Publication year
+
+        <label class="discover-field discover-field--narrow">
+          <span class="discover-field-label">Year</span>
           <input type="number" name="year" min="1500" max="2100" value="{{ request.args.get('year', '') }}" />
         </label>
-        <label>
-          Open access
+
+        <label class="discover-field">
+          <span class="discover-field-label">Open access</span>
           <select name="is_oa">
             <option value="" {% if not request.args.get('is_oa') %}selected{% endif %}>Any</option>
-            <option value="true" {% if request.args.get('is_oa') == 'true' %}selected{% endif %}>Open access only</option>
-            <option value="false" {% if request.args.get('is_oa') == 'false' %}selected{% endif %}>Not OA</option>
+            <option value="true" {% if request.args.get('is_oa') == 'true' %}selected{% endif %}>Open only</option>
+            <option value="false" {% if request.args.get('is_oa') == 'false' %}selected{% endif %}>Not open</option>
           </select>
         </label>
-        <label>
-          Sort / rank
+
+        <label class="discover-field discover-field--wide">
+          <span class="discover-field-label">Sort</span>
           <select name="sort">
-            <option value="recency" {% if request.args.get('sort', 'recency') == 'recency' %}selected{% endif %}
-              >Recency</option
-            >
-            <option value="citations" {% if request.args.get('sort') == 'citations' %}selected{% endif %}
-              >Citation count</option
-            >
-            <option value="topic_match" {% if request.args.get('sort') == 'topic_match' %}selected{% endif %}
-              >Topic match / relevance (with keyword or title search)</option
-            >
+            <option value="recency" {% if request.args.get('sort', 'recency') == 'recency' %}selected{% endif %}>Newest first</option>
+            <option value="citations" {% if request.args.get('sort') == 'citations' %}selected{% endif %}>Most cited</option>
+            <option value="topic_match" {% if request.args.get('sort') == 'topic_match' %}selected{% endif %}>Best text match (use keywords or title)</option>
           </select>
         </label>
-        <label>
-          Results per page
+
+        <label class="discover-field discover-field--narrow">
+          <span class="discover-field-label">Per page</span>
           <input type="number" name="per_page" min="1" max="200" value="{{ request.args.get('per_page', '25') }}" />
         </label>
-        <button type="submit" class="auth-button">Search &amp; ingest</button>
+
+        <div class="discover-actions">
+          <button type="submit" class="auth-button discover-submit">Search &amp; save to catalog</button>
+        </div>
       </form>
+
       <p class="discover-hint">
-        API: <code>/api/v1/papers/discover</code> with the same query parameters (<code>GET</code>).
+        Developers: <code>GET /api/v1/papers/discover</code> accepts the same query parameters.
       </p>
     </section>
 
     {% if error %}
-    <p class="auth-alert" role="alert">{{ error }}</p>
+    <p class="auth-alert discover-alert" role="alert">{{ error }}</p>
     {% endif %}
 
     {% if meta and meta.get('count') is not none %}
-    <p class="discover-meta">
-      OpenAlex reports <strong>{{ meta.count }}</strong> total matches for this query. This page ingested
-      <strong>{{ papers|length }}</strong> works.
+    <p class="discover-meta" role="status">
+      OpenAlex total: <strong>{{ meta.count }}</strong> · Saved this page: <strong>{{ papers|length }}</strong>
     </p>
     {% endif %}
 
     {% if next_url %}
-    <p class="discover-pagination">
-      <a class="discover-next" href="{{ next_url }}">Next page →</a>
-    </p>
+    <nav class="discover-pagination" aria-label="More results">
+      <a class="discover-next" href="{{ next_url }}">Next page</a>
+    </nav>
     {% endif %}
 
-    <div class="paper-feed" role="feed">
+    <div class="paper-feed discover-results" role="feed" aria-label="Search results">
       {% for paper in papers %}
       {{ paper_card(paper, is_authenticated, paper.id in saved_ids) }}
       {% else %}
-      {% if request.args.get('q')
+      {% set has_query = request.args.get('q')
         or request.args.get('title')
         or request.args.get('author')
         or request.args.get('concept')
         or request.args.get('year')
         or request.args.get('is_oa')
         or request.args.get('cursor') %}
-      {% if error is none %}
-      <p class="empty-state">No works returned for this query.</p>
-      {% endif %}
-      {% else %}
-      <p class="empty-state">Enter at least one filter or keyword above, then run Search &amp; ingest.</p>
+      {% if has_query and error is none %}
+      <p class="empty-state">No works matched. Try broader keywords or fewer filters.</p>
+      {% elif not has_query %}
+      <p class="empty-state muted">Submit the form above to see results here.</p>
       {% endif %}
       {% endfor %}
     </div>
