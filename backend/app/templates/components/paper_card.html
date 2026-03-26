@@ -26,7 +26,7 @@
     <span class="paper-figure-label">Fig.</span>
   </div>
   <div class="paper-content">
-    <p class="sr-only">{{ paper.topic }}</p>
+    <p class="paper-kicker">{{ paper.topic }}</p>
     <h2 class="paper-title">{{ paper.title }}</h2>
     <p class="paper-summary">{{ paper.summary() }}</p>
     {% if paper.venue or paper.published_at or paper.cited_by_count is not none %}
