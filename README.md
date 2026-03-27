@@ -8,7 +8,6 @@ Flask monolith for **browsing a shared catalog of academic papers** (titles, top
 - **Flask-SQLAlchemy**, **Flask-Migrate**, **Marshmallow**
 - **SQLite** locally (`sqlite:///./app.db` — run commands from **`backend/`**). Use **`DATABASE_URL`** in production for a hosted database
 - **python-dotenv** — see `backend/.env.example`
-- **Gunicorn** in `requirements.txt` for EC2/systemd
 
 ## Local setup
 
@@ -38,12 +37,6 @@ If you had an older database from a previous schema, delete `backend/app.db` and
 | GET | `/api/v1/papers/topics` | Distinct topics |
 | POST | `/login`, `/logout`, `/register` | Session auth (unchanged structure) |
 | GET | `/me` | Current user (JSON) |
-
-## EC2 / Actions
-
-GitHub Actions (`.github/workflows/deploy.yml`) SSHs to the server, pulls, runs `pip install`, `flask db upgrade`, and restarts **`flaskapp`**. Use **Discover** (web or API) on the server if the catalog is empty after deploy.
-
-Example systemd unit: `deploy/flaskapp.service.example`.
 
 ## Vercel deployment
 
