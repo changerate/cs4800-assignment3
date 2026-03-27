@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Signup/Login · Campus Research{% endblock %}
+{% block title %}Signup/Login · Paper View{% endblock %}
 {% block body %}
 <div class="shell">
   {% include "partials/sidebar.html" %}
@@ -65,7 +65,7 @@
       {% else %}
       <article class="auth-card">
         <h2 class="auth-card-title">Log in</h2>
-        <p class="auth-card-subtitle">Welcome back to Campus Research.</p>
+        <p class="auth-card-subtitle">Welcome back to Paper View.</p>
         <form method="post" action="{{ url_for('web.login_page') }}" class="auth-form">
           <input type="hidden" name="next" value="{{ next_path }}" />
 

@@ -1,4 +1,4 @@
-# Assignment 3 — Campus Research
+# Assignment 3 — Paper View
 
 Flask monolith for **browsing a shared catalog of academic papers** (titles, topic filters, abstract summaries). The UI is a Substack-style shell with a **left sidebar** (Home / Saved / Profile + interest filters) and a **vertically scrollable feed** of paper cards.
 
