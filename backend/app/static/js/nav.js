@@ -4,6 +4,7 @@
 
   const canHandleLink = (anchor) => {
     if (!anchor || !anchor.href) return false;
+    if (anchor.dataset && anchor.dataset.relatedModal === "true") return false;
     if (anchor.target && anchor.target !== "_self") return false;
     if (anchor.hasAttribute("download")) return false;
     const nextUrl = new URL(anchor.href, window.location.href);
@@ -63,8 +64,91 @@
     }
   };
 
+  let relatedBackdrop = null;
+  let relatedOnKeyDown = null;
+
+  const closeRelatedModal = () => {
+    if (!relatedBackdrop) return;
+    const toRemove = relatedBackdrop;
+    toRemove.classList.remove("is-open");
+    relatedBackdrop = null;
+    document.body.classList.remove("related-modal-open");
+    if (relatedOnKeyDown) {
+      document.removeEventListener("keydown", relatedOnKeyDown);
+      relatedOnKeyDown = null;
+    }
+    window.setTimeout(() => {
+      toRemove?.remove();
+    }, 240);
+  };
+
+  const openRelatedModal = async (url) => {
+    if (relatedBackdrop) closeRelatedModal();
+
+    relatedBackdrop = document.createElement("div");
+    relatedBackdrop.className = "related-backdrop";
+    relatedBackdrop.setAttribute("role", "dialog");
+    relatedBackdrop.setAttribute("aria-modal", "true");
+
+    const panel = document.createElement("div");
+    panel.className = "related-panel";
+    panel.addEventListener("click", (e) => e.stopPropagation());
+
+    relatedBackdrop.appendChild(panel);
+    document.body.appendChild(relatedBackdrop);
+
+    document.body.classList.add("related-modal-open");
+
+    // Click outside the panel closes.
+    relatedBackdrop.addEventListener("click", (e) => {
+      if (e.target === relatedBackdrop) closeRelatedModal();
+    });
+
+    // ESC closes.
+    relatedOnKeyDown = (e) => {
+      if (e.key === "Escape") closeRelatedModal();
+    };
+    document.addEventListener("keydown", relatedOnKeyDown);
+
+    window.requestAnimationFrame(() => relatedBackdrop.classList.add("is-open"));
+
+    panel.innerHTML =
+      '<div class="empty-state muted" style="padding: 1.25rem 0;">Loading related feed…</div>';
+
+    try {
+      const html = await fetchHtml(url);
+      const nextDoc = new DOMParser().parseFromString(html, "text/html");
+      const nextMain = nextDoc.querySelector(".feed-main");
+
+      if (!nextMain) {
+        panel.innerHTML = '<div class="empty-state muted">No related content.</div>';
+        return;
+      }
+
+      panel.innerHTML = "";
+      // Clone so we don't move nodes out of the parsed document.
+      const clonedMain = nextMain.cloneNode(true);
+      clonedMain.classList.add("related-feed");
+      panel.appendChild(clonedMain);
+    } catch (error) {
+      panel.innerHTML =
+        '<div class="empty-state muted">Failed to load related feed. Please try again.</div>';
+    }
+  };
+
   document.addEventListener("click", (event) => {
     const anchor = event.target.closest("a");
+    if (
+      anchor &&
+      anchor.dataset &&
+      anchor.dataset.relatedModal === "true" &&
+      !isModifiedClick(event)
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openRelatedModal(anchor.href);
+      return;
+    }
     if (!anchor || isModifiedClick(event) || !canHandleLink(anchor)) return;
     event.preventDefault();
     navigateTo(anchor.href, true);

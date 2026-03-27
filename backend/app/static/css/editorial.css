@@ -104,6 +104,7 @@ code { font-size: .86em; padding: .1rem .35rem; background: #ebe6dc; border: 1px
 .empty-state.muted { color: var(--ink-soft); }
 
 .auth-hero, .profile-header { margin-bottom: 1.4rem; }
+.profile-header .icon-label { display: inline-flex; align-items: center; gap: .5rem; }
 .auth-eyebrow, .profile-eyebrow, .discover-form-title { margin: 0 0 .38rem; color: var(--ink-soft); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
 .auth-alert, .discover-alert { border: 1px solid #c97757; color: #6f2209; background: #f6e5dd; padding: .65rem .72rem; font-size: .9rem; }
 .auth-info { border: 1px solid #9caa8f; color: #2f4c26; background: #e7ede0; padding: .65rem .72rem; font-size: .9rem; }
@@ -151,4 +152,51 @@ form.auth-form.discover-form .discover-field--narrow { max-width: 11rem; }
 @media (max-width: 640px) {
   form.auth-form.discover-form { grid-template-columns: 1fr; }
   form.auth-form.discover-form .discover-field--narrow { max-width: none; }
+}
+
+.related-modal-open {
+  overflow: hidden;
+}
+
+.related-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(23, 22, 20, 0.38);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.related-backdrop.is-open {
+  opacity: 1;
+}
+
+.related-panel {
+  width: min(980px, 92vw);
+  height: 100%;
+  overflow-y: auto;
+  background: var(--surface);
+  border-left: 1px solid var(--line-strong);
+  transform: translateX(18rem);
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.related-backdrop.is-open .related-panel {
+  transform: translateX(0);
+}
+
+.related-panel .feed-main.related-feed {
+  max-width: none;
+  padding: 2.1rem 2.2rem 3rem;
+}
+
+.related-panel .paper-feed {
+  gap: 2.2rem;
+}
+
+.related-panel .feed-header {
+  margin-bottom: 2rem;
 }

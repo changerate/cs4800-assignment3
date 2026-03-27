@@ -56,9 +56,15 @@
     </p>
     {% endif %}
     <div class="paper-actions" aria-label="Paper actions">
-      <a class="paper-action-button secondary" href="{{ url_for('web.show_related', paper_id=paper.id) }}"
-        ><span class="icon-label"><i class="bi bi-diagram-3" aria-hidden="true"></i><span>Related</span></span></a
+      <a
+        class="paper-action-button secondary js-related-modal"
+        href="{{ url_for('web.show_related', paper_id=paper.id) }}"
+        data-related-modal="true"
       >
+        <span class="icon-label"
+          ><i class="bi bi-diagram-3" aria-hidden="true"></i><span>Related</span></span
+        >
+      </a>
       {% if is_authenticated %}
       {% if is_saved %}
       <form method="post" action="{{ url_for('web.unsave_paper', paper_id=paper.id) }}">
