@@ -1,5 +1,7 @@
 # Assignment 3 — Paper View
 
+*Cal Poly Pomona, Spring 2026*
+
 Flask monolith for **browsing a shared catalog of academic papers** (titles, topic filters, abstract summaries). The UI is a Substack-style shell with a **left sidebar** (Home / Saved / Profile + interest filters) and a **vertically scrollable feed** of paper cards.
 
 ## Stack
@@ -41,6 +43,10 @@ If you had an older database from a previous schema, delete `backend/app.db` and
 ## Vercel deployment
 
 This repo includes a Vercel serverless entrypoint (`api/index.py`) and routing config (`vercel.json`) for Flask.
+
+### Automatic deployment
+
+When pushing to main, Vercel notices this and automatically rebuilds off the most recent commit.
 
 ### Production requirements
 
