@@ -181,4 +181,64 @@
   window.addEventListener("popstate", () => {
     navigateTo(window.location.href, false);
   });
+
+  const updateSaveFormUI = (form, isSaved) => {
+    const button = form.querySelector("button[type='submit']");
+    const icon = button?.querySelector("i");
+    if (!button || !icon) return;
+
+    form.dataset.saved = isSaved ? "true" : "false";
+    if (isSaved) {
+      form.action = form.action.replace(/\/save$/, "/unsave");
+      button.setAttribute("aria-label", "Unsave paper");
+      icon.className = "bi bi-bookmark-check-fill";
+    } else {
+      form.action = form.action.replace(/\/unsave$/, "/save");
+      button.setAttribute("aria-label", "Save paper");
+      icon.className = "bi bi-bookmark-plus";
+    }
+  };
+
+  document.addEventListener("submit", async (event) => {
+    const form = event.target.closest("form.paper-save-form");
+    if (!form) return;
+    event.preventDefault();
+
+    const button = form.querySelector("button[type='submit']");
+    if (!button || button.disabled) return;
+
+    const currentlySaved = form.dataset.saved === "true";
+    button.disabled = true;
+    button.classList.add("is-loading");
+
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "spa-nav" },
+      });
+
+      if (response.redirected && response.url.includes("/auth")) {
+        window.location.assign(response.url);
+        return;
+      }
+      if (!response.ok) throw new Error(`Save toggle failed: ${response.status}`);
+
+      const nextSaved = !currentlySaved;
+      // Save state changed server-side; invalidate prefetched page cache so
+      // Home/Saved/related views don't show stale paper lists.
+      htmlCache.clear();
+      updateSaveFormUI(form, nextSaved);
+
+      if (!nextSaved && form.dataset.page === "saved") {
+        const card = form.closest(".paper-card");
+        card?.remove();
+      }
+    } catch (error) {
+      HTMLFormElement.prototype.submit.call(form);
+    } finally {
+      button.disabled = false;
+      button.classList.remove("is-loading");
+    }
+  });
 })();

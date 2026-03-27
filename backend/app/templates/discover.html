@@ -99,7 +99,7 @@
 
     <div class="paper-feed discover-results" role="feed" aria-label="Search results">
       {% for paper in papers %}
-      {{ paper_card(paper, is_authenticated, paper.id in saved_ids) }}
+      {{ paper_card(paper, is_authenticated, paper.id in saved_ids, page) }}
       {% else %}
       {% set has_query = request.args.get('q')
         or request.args.get('title')

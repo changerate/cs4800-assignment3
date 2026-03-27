@@ -34,7 +34,7 @@
     </header>
     <div class="paper-feed" role="feed">
       {% for paper in papers %}
-      {{ paper_card(paper, is_authenticated, paper.id in saved_ids) }}
+      {{ paper_card(paper, is_authenticated, paper.id in saved_ids, page) }}
       {% else %}
       <p class="empty-state">
         {% if related_source %}

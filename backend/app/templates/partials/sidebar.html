@@ -35,6 +35,7 @@
     {% endif %}
   </nav>
 
+  {% if page == 'home' %}
   <section class="sidebar-filters" aria-labelledby="filter-heading">
     <h2 id="filter-heading" class="sidebar-heading">
       <span class="icon-label"><i class="bi bi-funnel" aria-hidden="true"></i><span>Research areas</span></span>
@@ -99,4 +100,5 @@
     </details>
     {% endfor %}
   </section>
+  {% endif %}
 </aside>
