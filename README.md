@@ -46,6 +46,32 @@ GitHub Actions (`.github/workflows/deploy.yml`) SSHs to the server, pulls, runs 
 
 Example systemd unit: `deploy/flaskapp.service.example`.
 
+## Vercel deployment
+
+This repo includes a Vercel serverless entrypoint (`api/index.py`) and routing config (`vercel.json`) for Flask.
+
+### Production requirements
+
+- Set `SECRET_KEY` in Vercel Project Settings (do not use the dev default).
+- Set `DATABASE_URL` to a hosted Postgres instance (Neon/Supabase/RDS). Do not use local SQLite on Vercel.
+- Optional: set `OPENALEX_MAILTO` for OpenAlex polite pool requests.
+
+### Database migrations
+
+Run migrations as a separate release step, not per request. One simple workflow:
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+export FLASK_APP=wsgi:application
+export DATABASE_URL="postgresql+psycopg://..."
+flask db upgrade
+```
+
+If you run migrations in CI, use the same env vars used by Vercel production.
+
 ## Layout
 
 ```
