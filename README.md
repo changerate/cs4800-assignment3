@@ -23,7 +23,7 @@ flask db upgrade
 flask run --debug
 ```
 
-Open http://127.0.0.1:5000 — the home feed loads **papers from the database**. Use sidebar pills to filter by **topic**. Populate the catalog via **Discover** at http://127.0.0.1:5000/discover or `GET /api/v1/papers/discover`.
+Open http://127.0.0.1:5000 — the home feed loads **papers from the database**. Use sidebar pills to filter by **topic**. Populate the catalog via the developer load page at http://127.0.0.1:5000/load-from-api.
 
 If you had an older database from a previous schema, delete `backend/app.db` and run `flask db upgrade` again.
 
@@ -32,10 +32,9 @@ If you had an older database from a previous schema, delete `backend/app.db` and
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/` | Landing feed (`?topic=` optional) |
-| GET | `/discover` | OpenAlex search + ingest into the catalog |
+| GET | `/load-from-api` | Developer utility page for OpenAlex search + ingest |
 | GET | `/saved`, `/profile` | Placeholder pages (same shell; no extra features in scope) |
 | GET | `/api/v1/papers` | JSON feed (`topic`, `limit`, optional `sort`) |
-| GET | `/api/v1/papers/discover` | OpenAlex discovery (`q`, filters, `sort`, `per_page`, `cursor`) |
 | GET | `/api/v1/papers/topics` | Distinct topics |
 | POST | `/login`, `/logout`, `/register` | Session auth (unchanged structure) |
 | GET | `/me` | Current user (JSON) |

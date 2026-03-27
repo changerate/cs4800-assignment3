@@ -226,7 +226,7 @@ def _related_papers(seed: ResearchPaper, limit: int = 8) -> list[ResearchPaper]:
     return [paper for _, paper in scored[:limit]]
 
 
-@bp.get("/discover")
+@bp.get("/load-from-api")
 def discover():
     user = _get_authenticated_user()
     saved_ids = _saved_paper_ids(user)

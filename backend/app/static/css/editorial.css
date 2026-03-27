@@ -32,7 +32,6 @@ code { font-size: .86em; padding: .1rem .35rem; background: #ebe6dc; border: 1px
 .sidebar-tagline { margin: .5rem 0 0; max-width: 18ch; color: var(--ink-soft); font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; }
 .sidebar-nav { margin-bottom: 1.9rem; display: grid; gap: .3rem; counter-reset: nav-item; }
 .sidebar-link { display: flex; align-items: center; gap: .65rem; padding: .44rem 0; color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid transparent; line-height: 1.25; }
-.sidebar-link::before { counter-increment: nav-item; content: counter(nav-item, decimal-leading-zero); font-size: .64rem; letter-spacing: .1em; color: var(--line-strong); min-width: 2.1rem; }
 .filter-pill .icon-label { display: inline-flex; align-items: center; gap: 0.5rem; }
 .sidebar-link .icon-label { display: inline-flex; align-items: center; gap: .55rem; }
 .sidebar-link .bi { font-size: .78em; color: var(--ink-soft); line-height: 1; }
