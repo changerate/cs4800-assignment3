@@ -7,10 +7,20 @@ _backend_root = Path(__file__).resolve().parent.parent
 load_dotenv(_backend_root / ".env")
 
 
+def _default_database_url() -> str:
+    configured = os.environ.get("DATABASE_URL")
+    if configured:
+        return configured
+    # Vercel's filesystem is read-only except /tmp.
+    if os.environ.get("VERCEL"):
+        return "sqlite:////tmp/app.db"
+    # Local default: run commands from backend/
+    return "sqlite:///./app.db"
+
+
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-change-me"
-    # Default: ./app.db relative to the process working directory (run Flask from `backend/`)
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL") or "sqlite:///./app.db"
+    SQLALCHEMY_DATABASE_URI = _default_database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
