@@ -1,4 +1,22 @@
 (() => {
+  // #region agent log
+  const debugLog = (runId, hypothesisId, location, message, data) => {
+    fetch("http://127.0.0.1:7787/ingest/61c4bf4a-d62c-4622-93b7-a084d32dbd83", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "61e6cf" },
+      body: JSON.stringify({
+        sessionId: "61e6cf",
+        runId,
+        hypothesisId,
+        location,
+        message,
+        data,
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+  };
+  // #endregion
+
   const isModifiedClick = (event) =>
     event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
 
@@ -16,23 +34,76 @@
   };
 
   const htmlCache = new Map();
+  const inFlightHtml = new Map();
+  const lastPrefetchAt = new Map();
   let inFlightController = null;
 
   const setBusy = (isBusy) => {
     document.body.classList.toggle("is-nav-loading", isBusy);
   };
 
-  const fetchHtml = async (url) => {
-    const key = url.toString();
+  const fetchHtml = async (url, reason = "unknown") => {
+    const parsedUrl = typeof url === "string" ? new URL(url, window.location.href) : url;
+    const key = parsedUrl.toString();
     if (htmlCache.has(key)) return htmlCache.get(key);
-    const response = await fetch(key, {
-      headers: { "X-Requested-With": "spa-nav" },
-      credentials: "same-origin",
+    if (inFlightHtml.has(key)) return inFlightHtml.get(key);
+    const startedAt = performance.now();
+    const requestPromise = (async () => {
+      const response = await fetch(key, {
+        headers: { "X-Requested-With": "spa-nav" },
+        credentials: "same-origin",
+      });
+      if (!response.ok) throw new Error(`Navigation failed: ${response.status}`);
+      const html = await response.text();
+      htmlCache.set(key, html);
+      // #region agent log
+      debugLog("post-fix", "H5", "nav.js:fetchHtml", "html fetch complete", {
+        reason,
+        path: parsedUrl.pathname + parsedUrl.search,
+        elapsedMs: Math.round((performance.now() - startedAt) * 100) / 100,
+        cacheSize: htmlCache.size,
+      });
+      // #endregion
+      return html;
+    })();
+    inFlightHtml.set(key, requestPromise);
+    try {
+      return await requestPromise;
+    } finally {
+      inFlightHtml.delete(key);
+    }
+  };
+
+  const shouldPrefetch = (url) => {
+    const key = url.toString();
+    if (htmlCache.has(key) || inFlightHtml.has(key)) return false;
+    const now = Date.now();
+    const lastAt = lastPrefetchAt.get(key) || 0;
+    if (now - lastAt < 1200) return false;
+    lastPrefetchAt.set(key, now);
+    return true;
+  };
+
+  const pathFromAnchor = (anchor) => {
+    const url = new URL(anchor.href, window.location.href);
+    return url.pathname + url.search;
+  };
+
+  const isRepeatedHoverWithinSameAnchor = (event, anchor) => {
+    const prev = event.relatedTarget;
+    return !!prev && anchor.contains(prev);
+  };
+
+  const prefetchLink = (anchor) => {
+    if (!canHandleLink(anchor)) return;
+    const url = new URL(anchor.href, window.location.href);
+    if (!shouldPrefetch(url)) return;
+    // #region agent log
+    debugLog("post-fix", "H5", "nav.js:prefetchLink", "prefetch requested", {
+      path: pathFromAnchor(anchor),
     });
-    if (!response.ok) throw new Error(`Navigation failed: ${response.status}`);
-    const html = await response.text();
-    htmlCache.set(key, html);
-    return html;
+    // #endregion
+    fetchHtml(url, "prefetch").catch(() => {});
   };
 
   const replaceShellFromHtml = (html) => {
@@ -51,7 +122,7 @@
     inFlightController = new AbortController();
     setBusy(true);
     try {
-      const html = await fetchHtml(url);
+      const html = await fetchHtml(url, "navigate");
       if (replaceShellFromHtml(html) && shouldPushState) {
         window.history.pushState({}, "", url);
       }
@@ -116,7 +187,7 @@
       '<div class="empty-state muted" style="padding: 1.25rem 0;">Loading related feed…</div>';
 
     try {
-      const html = await fetchHtml(url);
+      const html = await fetchHtml(url, "related-modal");
       const nextDoc = new DOMParser().parseFromString(html, "text/html");
       const nextMain = nextDoc.querySelector(".feed-main");
 
@@ -154,16 +225,11 @@
     navigateTo(anchor.href, true);
   });
 
-  const prefetchLink = (anchor) => {
-    if (!canHandleLink(anchor)) return;
-    const url = new URL(anchor.href, window.location.href);
-    fetchHtml(url).catch(() => {});
-  };
-
   document.addEventListener(
     "mouseover",
     (event) => {
       const anchor = event.target.closest("a");
+      if (anchor && isRepeatedHoverWithinSameAnchor(event, anchor)) return;
       if (anchor) prefetchLink(anchor);
     },
     { passive: true }
@@ -206,12 +272,26 @@
 
     const button = form.querySelector("button[type='submit']");
     if (!button || button.disabled) return;
+    if (form.dataset.pending === "true") return;
 
     const currentlySaved = form.dataset.saved === "true";
+    const nextSaved = !currentlySaved;
+    const card = form.closest(".paper-card");
+    const cardParent = card?.parentElement || null;
+    const cardNextSibling = card?.nextSibling || null;
+
+    form.dataset.pending = "true";
     button.disabled = true;
     button.classList.add("is-loading");
 
+    // Optimistic UI: flip immediately so the interaction feels instant.
+    updateSaveFormUI(form, nextSaved);
+    if (!nextSaved && form.dataset.page === "saved") {
+      card?.remove();
+    }
+
     try {
+      const saveStartedAt = performance.now();
       const response = await fetch(form.action, {
         method: "POST",
         credentials: "same-origin",
@@ -224,19 +304,34 @@
       }
       if (!response.ok) throw new Error(`Save toggle failed: ${response.status}`);
 
-      const nextSaved = !currentlySaved;
       // Save state changed server-side; invalidate prefetched page cache so
       // Home/Saved/related views don't show stale paper lists.
       htmlCache.clear();
-      updateSaveFormUI(form, nextSaved);
-
-      if (!nextSaved && form.dataset.page === "saved") {
-        const card = form.closest(".paper-card");
-        card?.remove();
-      }
+      // #region agent log
+      debugLog("post-fix", "H5", "nav.js:saveSubmit", "save/unsave response complete", {
+        actionPath: new URL(form.action, window.location.href).pathname,
+        responseStatus: response.status,
+        redirected: response.redirected,
+        elapsedMs: Math.round((performance.now() - saveStartedAt) * 100) / 100,
+      });
+      debugLog("post-fix", "H5", "nav.js:saveSubmit", "cache invalidated after save toggle", {
+        cacheSize: htmlCache.size,
+        nextSaved,
+      });
+      // #endregion
     } catch (error) {
+      // Roll back optimistic state on any error.
+      updateSaveFormUI(form, currentlySaved);
+      if (!nextSaved && form.dataset.page === "saved" && card && cardParent) {
+        if (cardNextSibling && cardNextSibling.parentNode === cardParent) {
+          cardParent.insertBefore(card, cardNextSibling);
+        } else {
+          cardParent.appendChild(card);
+        }
+      }
       HTMLFormElement.prototype.submit.call(form);
     } finally {
+      form.dataset.pending = "false";
       button.disabled = false;
       button.classList.remove("is-loading");
     }

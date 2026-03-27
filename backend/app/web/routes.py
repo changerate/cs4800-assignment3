@@ -1,4 +1,6 @@
 from urllib.parse import urlparse
+import json
+import time
 
 from flask import current_app, jsonify, redirect, render_template, request, session, url_for
 from sqlalchemy import or_
@@ -17,9 +19,35 @@ from app.services.openalex import (
 from app.web import bp
 
 me_schema = UserMeSchema()
+DEBUG_LOG_PATH = "/Users/carlos_1/Documents/GitHub/cs4800-assignment3/.cursor/debug-61e6cf.log"
 
 # Subfield query value for papers with no OpenAlex subfield (filter within a field).
 SUBFIELD_NONE_PARAM = "_none"
+
+
+def _is_spa_nav_request() -> bool:
+    return request.headers.get("X-Requested-With") == "spa-nav"
+
+
+# region agent log
+def _debug_log(run_id: str, hypothesis_id: str, location: str, message: str, data: dict):
+    payload = {
+        "sessionId": "61e6cf",
+        "runId": run_id,
+        "hypothesisId": hypothesis_id,
+        "location": location,
+        "message": message,
+        "data": data,
+        "timestamp": int(time.time() * 1000),
+    }
+    try:
+        with open(DEBUG_LOG_PATH, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, ensure_ascii=True) + "\n")
+    except Exception:
+        pass
+
+
+# endregion
 
 
 def _parse_credentials():
@@ -89,6 +117,9 @@ def _topic_area_tree() -> list[tuple[str, list[tuple[str, list[str]]]]]:
     """Field → (subfield key, topic names) for sidebar filters; sub key _none = broad/unspecified."""
     from collections import defaultdict
 
+    # region agent log
+    t0 = time.perf_counter()
+    # endregion
     rows = (
         ResearchPaper.query.with_entities(
             ResearchPaper.topic_field,
@@ -98,6 +129,15 @@ def _topic_area_tree() -> list[tuple[str, list[tuple[str, list[str]]]]]:
         .filter(ResearchPaper.topic_field.isnot(None))
         .all()
     )
+    # region agent log
+    _debug_log(
+        "baseline",
+        "H1",
+        "routes.py:_topic_area_tree",
+        "loaded sidebar topic rows",
+        {"rowCount": len(rows), "elapsedMs": round((time.perf_counter() - t0) * 1000, 2)},
+    )
+    # endregion
     by_sub: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
     other: dict[str, set[str]] = defaultdict(set)
     for f, sf, t in rows:
@@ -136,7 +176,22 @@ def _sidebar_topics_context(
 def _saved_paper_ids(user: User | None) -> set[int]:
     if user is None:
         return set()
-    return {paper.id for paper in user.saved_papers}
+    # region agent log
+    t0 = time.perf_counter()
+    saved_ids = {paper.id for paper in user.saved_papers}
+    _debug_log(
+        "baseline",
+        "H2",
+        "routes.py:_saved_paper_ids",
+        "loaded user saved ids",
+        {
+            "userId": user.id,
+            "savedCount": len(saved_ids),
+            "elapsedMs": round((time.perf_counter() - t0) * 1000, 2),
+        },
+    )
+    return saved_ids
+    # endregion
 
 
 def _tokenize(text: str) -> set[str]:
@@ -212,6 +267,9 @@ def discover():
 
 @bp.get("/")
 def index():
+    # region agent log
+    route_start = time.perf_counter()
+    # endregion
     topic = (request.args.get("topic") or "").strip() or None
     field = (request.args.get("field") or "").strip() or None
     raw_sub = (request.args.get("subfield") or "").strip()
@@ -247,6 +305,19 @@ def index():
     ).all()
     user = _get_authenticated_user()
     saved_ids = _saved_paper_ids(user)
+    # region agent log
+    _debug_log(
+        "baseline",
+        "H3",
+        "routes.py:index",
+        "index route completed",
+        {
+            "papersCount": len(papers),
+            "hasUser": user is not None,
+            "elapsedMs": round((time.perf_counter() - route_start) * 1000, 2),
+        },
+    )
+    # endregion
     return render_template(
         "index.html",
         papers=papers,
@@ -294,25 +365,159 @@ def saved():
 
 @bp.post("/papers/<int:paper_id>/save")
 def save_paper(paper_id: int):
+    # region agent log
+    route_start = time.perf_counter()
+    # endregion
+    # region agent log
+    step_start = time.perf_counter()
+    # endregion
     user = _get_authenticated_user()
+    # region agent log
+    _debug_log(
+        "post-fix",
+        "H6",
+        "routes.py:save_paper",
+        "save step complete: authenticated user lookup",
+        {"elapsedMs": round((time.perf_counter() - step_start) * 1000, 2), "hasUser": user is not None},
+    )
+    # endregion
     if user is None:
         return redirect(url_for("web.auth_page", next=request.referrer or url_for("web.index")))
+    # region agent log
+    step_start = time.perf_counter()
+    # endregion
     paper = ResearchPaper.query.get_or_404(paper_id)
-    if paper not in user.saved_papers:
+    # region agent log
+    _debug_log(
+        "post-fix",
+        "H6",
+        "routes.py:save_paper",
+        "save step complete: paper lookup",
+        {"elapsedMs": round((time.perf_counter() - step_start) * 1000, 2), "paperId": paper_id},
+    )
+    # endregion
+    # region agent log
+    step_start = time.perf_counter()
+    already_saved = paper in user.saved_papers
+    _debug_log(
+        "post-fix",
+        "H6",
+        "routes.py:save_paper",
+        "save step complete: saved-membership check",
+        {
+            "elapsedMs": round((time.perf_counter() - step_start) * 1000, 2),
+            "paperId": paper_id,
+            "alreadySaved": already_saved,
+        },
+    )
+    # endregion
+    if not already_saved:
+        # region agent log
+        step_start = time.perf_counter()
+        # endregion
         user.saved_papers.append(paper)
         db.session.commit()
+        # region agent log
+        _debug_log(
+            "post-fix",
+            "H6",
+            "routes.py:save_paper",
+            "save step complete: append+commit",
+            {"elapsedMs": round((time.perf_counter() - step_start) * 1000, 2), "paperId": paper_id},
+        )
+        # endregion
+    # region agent log
+    _debug_log(
+        "post-fix",
+        "H4",
+        "routes.py:save_paper",
+        "save route completed",
+        {
+            "paperId": paper_id,
+            "userId": user.id,
+            "elapsedMs": round((time.perf_counter() - route_start) * 1000, 2),
+        },
+    )
+    # endregion
+    if _is_spa_nav_request():
+        return ("", 204)
     return redirect(request.referrer or url_for("web.index"))
 
 
 @bp.post("/papers/<int:paper_id>/unsave")
 def unsave_paper(paper_id: int):
+    # region agent log
+    route_start = time.perf_counter()
+    # endregion
+    # region agent log
+    step_start = time.perf_counter()
+    # endregion
     user = _get_authenticated_user()
+    # region agent log
+    _debug_log(
+        "post-fix",
+        "H6",
+        "routes.py:unsave_paper",
+        "unsave step complete: authenticated user lookup",
+        {"elapsedMs": round((time.perf_counter() - step_start) * 1000, 2), "hasUser": user is not None},
+    )
+    # endregion
     if user is None:
         return redirect(url_for("web.auth_page", next=request.referrer or url_for("web.index")))
+    # region agent log
+    step_start = time.perf_counter()
+    # endregion
     paper = ResearchPaper.query.get_or_404(paper_id)
-    if paper in user.saved_papers:
+    # region agent log
+    _debug_log(
+        "post-fix",
+        "H6",
+        "routes.py:unsave_paper",
+        "unsave step complete: paper lookup",
+        {"elapsedMs": round((time.perf_counter() - step_start) * 1000, 2), "paperId": paper_id},
+    )
+    # endregion
+    # region agent log
+    step_start = time.perf_counter()
+    is_saved = paper in user.saved_papers
+    _debug_log(
+        "post-fix",
+        "H6",
+        "routes.py:unsave_paper",
+        "unsave step complete: saved-membership check",
+        {"elapsedMs": round((time.perf_counter() - step_start) * 1000, 2), "paperId": paper_id, "isSaved": is_saved},
+    )
+    # endregion
+    if is_saved:
+        # region agent log
+        step_start = time.perf_counter()
+        # endregion
         user.saved_papers.remove(paper)
         db.session.commit()
+        # region agent log
+        _debug_log(
+            "post-fix",
+            "H6",
+            "routes.py:unsave_paper",
+            "unsave step complete: remove+commit",
+            {"elapsedMs": round((time.perf_counter() - step_start) * 1000, 2), "paperId": paper_id},
+        )
+        # endregion
+    # region agent log
+    _debug_log(
+        "post-fix",
+        "H4",
+        "routes.py:unsave_paper",
+        "unsave route completed",
+        {
+            "paperId": paper_id,
+            "userId": user.id,
+            "elapsedMs": round((time.perf_counter() - route_start) * 1000, 2),
+        },
+    )
+    # endregion
+    if _is_spa_nav_request():
+        return ("", 204)
     return redirect(request.referrer or url_for("web.index"))
 
 

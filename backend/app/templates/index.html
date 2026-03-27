@@ -41,9 +41,7 @@
         No similar papers found for this item yet. Try another paper from
         <a href="{{ url_for('web.index') }}">the home feed</a>.
         {% else %}
-        No papers in the catalog yet — use
-        <a href="{{ url_for('web.discover') }}">Discover</a>
-        (or <code>GET /api/v1/papers/discover</code>) to ingest works from OpenAlex.
+        No papers in the catalog yet
         {% endif %}
       </p>
       {% endfor %}
