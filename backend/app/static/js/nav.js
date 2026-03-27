@@ -276,6 +276,8 @@
 
     const currentlySaved = form.dataset.saved === "true";
     const nextSaved = !currentlySaved;
+    // Keep the current endpoint for this click; optimistic UI mutates form.action.
+    const submitAction = form.action;
     const card = form.closest(".paper-card");
     const cardParent = card?.parentElement || null;
     const cardNextSibling = card?.nextSibling || null;
@@ -292,7 +294,7 @@
 
     try {
       const saveStartedAt = performance.now();
-      const response = await fetch(form.action, {
+      const response = await fetch(submitAction, {
         method: "POST",
         credentials: "same-origin",
         headers: { "X-Requested-With": "spa-nav" },
@@ -309,7 +311,7 @@
       htmlCache.clear();
       // #region agent log
       debugLog("post-fix", "H5", "nav.js:saveSubmit", "save/unsave response complete", {
-        actionPath: new URL(form.action, window.location.href).pathname,
+        actionPath: new URL(submitAction, window.location.href).pathname,
         responseStatus: response.status,
         redirected: response.redirected,
         elapsedMs: Math.round((performance.now() - saveStartedAt) * 100) / 100,
