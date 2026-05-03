@@ -1,0 +1,25 @@
+{
+  "name": "cs4800-assignment3",
+  "version": "1.0.0",
+  "description": "*Cal Poly Pomona, Spring 2026*",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "vercel": "vercel",
+    "deploy": "vercel deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/changerate/cs4800-assignment3.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/changerate/cs4800-assignment3/issues"
+  },
+  "homepage": "https://github.com/changerate/cs4800-assignment3#readme",
+  "devDependencies": {
+    "vercel": "^53.1.0"
+  }
+}
