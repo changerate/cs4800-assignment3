@@ -1,17 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Signup/Login · Paper View{% endblock %}
+{% block title %}{% if mode == "signup" %}Sign up{% else %}Log in{% endif %} · Paper View{% endblock %}
 {% block body %}
 <div class="shell">
   {% include "partials/sidebar.html" %}
   <main class="feed-main">
-    <section class="auth-hero">
-      <p class="auth-eyebrow">Account access</p>
-      <h1 class="feed-title">Signup/Login</h1>
-      <p class="feed-lede">
-        Create an account or sign in to continue to your profile.
-      </p>
-    </section>
-
     {% if error %}
     <p class="auth-alert" role="alert">{{ error }}</p>
     {% endif %}
@@ -22,8 +14,7 @@
     <section class="auth-grid" aria-label="Authentication">
       {% if mode == "signup" %}
       <article class="auth-card">
-        <h2 class="auth-card-title">Sign up</h2>
-        <p class="auth-card-subtitle">Get started in less than a minute.</p>
+        <h1 class="auth-card-title">Sign up</h1>
         <form method="post" action="{{ url_for('web.signup') }}" class="auth-form">
           <label for="signup-username">Username</label>
           <input
@@ -64,8 +55,7 @@
       </article>
       {% else %}
       <article class="auth-card">
-        <h2 class="auth-card-title">Log in</h2>
-        <p class="auth-card-subtitle">Welcome back to Paper View.</p>
+        <h1 class="auth-card-title">Log in</h1>
         <form method="post" action="{{ url_for('web.login_page') }}" class="auth-form">
           <input type="hidden" name="next" value="{{ next_path }}" />
 
@@ -97,8 +87,6 @@
       </article>
       {% endif %}
     </section>
-
-    {% include "partials/site_footer.html" %}
   </main>
 
   {% include "partials/bottom_nav.html" %}

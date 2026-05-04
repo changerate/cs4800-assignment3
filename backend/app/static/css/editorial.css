@@ -83,7 +83,7 @@ code { font-size: .86em; padding: .1rem .35rem; background: #ebe6dc; border: 1px
   box-shadow: inset 1px 0 0 rgba(162, 153, 137, 0.28);
 }
 
-.feed-main > :is(.feed-header, .auth-hero, .profile-header):first-child {
+.feed-main > :is(.feed-header, .profile-header):first-child {
   margin-left: calc(-1 * var(--feed-main-pad-x));
   margin-right: calc(-1 * var(--feed-main-pad-x));
   margin-top: calc(-1 * var(--feed-main-pad-y-top));
@@ -96,7 +96,7 @@ code { font-size: .86em; padding: .1rem .35rem; background: #ebe6dc; border: 1px
   border-radius: 0 0 0.45rem 0.45rem;
 }
 
-.feed-main > :is(.feed-header, .auth-hero, .profile-header):first-child .feed-title {
+.feed-main > :is(.feed-header, .profile-header):first-child .feed-title {
   max-width: 76ch;
 }
 
@@ -234,17 +234,18 @@ code { font-size: .86em; padding: .1rem .35rem; background: #ebe6dc; border: 1px
 }
 .empty-state.muted { color: var(--ink-soft); }
 
-.auth-hero:not(:first-child),
 .profile-header:not(:first-child) {
   margin-bottom: 1.4rem;
 }
 .profile-header .icon-label { display: inline-flex; align-items: center; gap: .5rem; }
-.auth-eyebrow, .profile-eyebrow, .discover-form-title { margin: 0 0 .38rem; color: var(--ink-soft); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
+.profile-eyebrow, .discover-form-title { margin: 0 0 .38rem; color: var(--ink-soft); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
 .auth-alert, .discover-alert { border: 1px solid #c97757; color: #6f2209; background: #f6e5dd; padding: .65rem .72rem; font-size: .9rem; }
 .auth-info { border: 1px solid #9caa8f; color: #2f4c26; background: #e7ede0; padding: .65rem .72rem; font-size: .9rem; }
 .auth-grid { display: grid; gap: 1.1rem; grid-template-columns: minmax(0, 480px); }
 .auth-card, .profile-card, .discover-panel { border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line); padding: 1rem 0; background: transparent; }
+.auth-card { border-top: none; border-bottom: none; }
 .auth-card-title, .profile-card-title { margin: 0; font-family: var(--serif); font-size: 1.28rem; }
+.auth-card > .auth-card-title { margin-bottom: 0.65rem; }
 .auth-card-subtitle, .discover-intro, .profile-muted, .discover-hint, .discover-meta { color: var(--ink-soft); font-size: .9rem; }
 .auth-form { display: flex; flex-direction: column; gap: .56rem; }
 .auth-form label { color: var(--ink-soft); font-size: .79rem; letter-spacing: .05em; text-transform: uppercase; font-weight: 600; }
@@ -620,6 +621,6 @@ form.auth-form.discover-form .discover-field--narrow { max-width: 11rem; }
   gap: 2.2rem;
 }
 
-.related-panel .feed-main > :is(.feed-header, .auth-hero, .profile-header):first-child {
+.related-panel .feed-main > :is(.feed-header, .profile-header):first-child {
   margin-bottom: 2rem;
 }
