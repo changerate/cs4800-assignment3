@@ -1,0 +1,59 @@
+<section class="sidebar-filters" aria-labelledby="{{ heading_id }}">
+  <h2 id="{{ heading_id }}" class="sidebar-heading">
+    <span class="icon-label"><i class="bi bi-funnel" aria-hidden="true"></i><span>Research areas</span></span>
+  </h2>
+  <p class="sidebar-filters-intro">Open a subject, then narrow by sub-area or a specific topic.</p>
+  <ul class="filter-list">
+    <li>
+      <a
+        href="{{ url_for('web.index') }}"
+        class="filter-pill {% if not active_topic and not request.args.get('field', '') %}is-active{% endif %}"
+        ><span class="icon-label"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i><span>All topics</span></span></a
+      >
+    </li>
+  </ul>
+  {% for field_name, subgroups in topic_areas %}
+  <details
+    class="filter-area-group"
+    {% if sidebar_open_field == field_name %}open{% endif %}
+  >
+    <summary class="filter-area-summary">
+      <span class="filter-area-chevron" aria-hidden="true"></span>
+      <span class="filter-area-title">{{ field_name }}</span>
+    </summary>
+    <div class="filter-area-body">
+      <a
+        href="{{ url_for('web.index', field=field_name) }}"
+        class="filter-scope-link {% if request.args.get('field', '') == field_name and not request.args.get('subfield', '') and not active_topic %}is-active{% endif %}"
+        >All in {{ field_name }}</a
+      >
+      {% for sub_key, topic_list in subgroups %}
+      <details
+        class="filter-subgroup"
+        {% if sidebar_open_field == field_name and sidebar_open_subfield == sub_key %}open{% endif %}
+      >
+        <summary class="filter-subgroup-summary">
+          <span class="filter-area-chevron filter-area-chevron--small" aria-hidden="true"></span>
+          {% if sub_key == '_none' %}
+          <span class="filter-subgroup-title">General</span>
+          {% else %}
+          <span class="filter-subgroup-title">{{ sub_key }}</span>
+          {% endif %}
+        </summary>
+        <ul class="filter-topic-list">
+          {% for t in topic_list %}
+          <li>
+            <a
+              href="{{ url_for('web.index', topic=t) }}"
+              class="filter-pill filter-pill-topic {% if active_topic == t %}is-active{% endif %}"
+              >{{ t }}</a
+            >
+          </li>
+          {% endfor %}
+        </ul>
+      </details>
+      {% endfor %}
+    </div>
+  </details>
+  {% endfor %}
+</section>

@@ -47,5 +47,35 @@
       {% endfor %}
     </div>
   </main>
+
+  {% if page == 'home' %}
+  <dialog id="topic-filters-dialog" class="topic-filters-dialog" aria-labelledby="filter-heading-dialog">
+    <div class="topic-filters-dialog-shell">
+      <form method="dialog" class="topic-filters-dialog-toolbar">
+        <button type="submit" class="topic-filters-dialog-close" aria-label="Close filters">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </form>
+      <div class="topic-filters-dialog-body">
+        {% with heading_id="filter-heading-dialog" %}{% include "partials/topic_filters.html" %}{% endwith %}
+      </div>
+    </div>
+  </dialog>
+  {% endif %}
+
+  {% if page == 'home' %}
+  <button
+    type="button"
+    class="filter-fab mobile-only-control"
+    aria-expanded="false"
+    aria-controls="topic-filters-dialog"
+    data-open-topic-filters
+  >
+    <span class="sr-only">Open research area filters</span>
+    <i class="bi bi-funnel" aria-hidden="true"></i>
+  </button>
+  {% endif %}
+
+  {% include "partials/bottom_nav.html" %}
 </div>
 {% endblock %}

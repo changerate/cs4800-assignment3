@@ -10,7 +10,12 @@
       <p class="feed-lede">Developer utility: find works in OpenAlex and save them to the catalog (same rows as Home and the JSON API).</p>
     </header>
 
-    <section class="discover-panel" aria-labelledby="discover-filters-label">
+    <div class="discover-sheet-backdrop" data-discover-backdrop aria-hidden="true" tabindex="-1"></div>
+
+    <section id="discover-panel" class="discover-panel discover-panel--sheet" aria-labelledby="discover-filters-label">
+      <button type="button" class="discover-sheet-close mobile-only-control" data-close-discover-sheet aria-label="Close search filters">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
       <h2 id="discover-filters-label" class="discover-form-title">Filters</h2>
       <p class="discover-intro">Use at least one field below, then submit. Duplicates are skipped when the OpenAlex work ID or DOI already exists.</p>
 
@@ -92,7 +97,7 @@
     {% endif %}
 
     {% if next_url %}
-    <nav class="discover-pagination" aria-label="More results">
+    <nav class="discover-pagination discover-pagination--sticky-mobile" aria-label="More results">
       <a class="discover-next" href="{{ next_url }}">Next page</a>
     </nav>
     {% endif %}
@@ -116,5 +121,18 @@
       {% endfor %}
     </div>
   </main>
+
+  <button
+    type="button"
+    class="filter-fab mobile-only-control"
+    aria-expanded="false"
+    aria-controls="discover-panel"
+    data-open-discover-sheet
+  >
+    <span class="sr-only">Open search filters</span>
+    <i class="bi bi-funnel" aria-hidden="true"></i>
+  </button>
+
+  {% include "partials/bottom_nav.html" %}
 </div>
 {% endblock %}
