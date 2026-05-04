@@ -153,9 +153,30 @@ code { font-size: .86em; padding: .1rem .35rem; background: #ebe6dc; border: 1px
 .paper-content { min-width: 0; max-width: 72ch; }
 .paper-kicker { margin: 0; color: var(--accent); font-size: .67rem; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; }
 .paper-title { margin: .2rem 0 .45rem; font-family: var(--serif); font-size: clamp(1.45rem, 2.6vw, 2.35rem); line-height: 1.06; letter-spacing: -.02em; font-weight: 600; }
+.paper-title-hover { display: inline; cursor: help; }
 .paper-title-link { color: inherit; text-decoration: none; }
 .paper-title-link:hover { color: var(--accent); }
 .paper-title-link:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: 3px; }
+
+.paper-abstract-tooltip {
+  position: fixed;
+  z-index: 9000;
+  max-height: min(55vh, 22rem);
+  overflow: auto;
+  padding: .85rem 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: .28rem;
+  background: rgba(252, 249, 242, 0.98);
+  color: var(--ink);
+  font-family: var(--sans, system-ui, sans-serif);
+  font-size: .86rem;
+  line-height: 1.45;
+  letter-spacing: .01em;
+  text-transform: none;
+  font-weight: 400;
+  box-shadow: 0 12px 40px rgba(30, 24, 18, 0.12), 0 2px 8px rgba(30, 24, 18, 0.06);
+  -webkit-overflow-scrolling: touch;
+}
 .paper-meta, .paper-external { margin: .6rem 0 0; color: var(--ink-soft); font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; }
 .paper-meta-sep { margin: 0 .33rem; color: var(--line-strong); }
 .paper-external-link { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: .06rem; }

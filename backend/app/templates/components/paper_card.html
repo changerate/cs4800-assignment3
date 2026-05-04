@@ -3,17 +3,19 @@
   <div class="paper-content">
     <p class="paper-kicker">{{ paper.topic }}</p>
     <h2 class="paper-title">
-      {% if paper.landing_url %}
-      <a
-        class="paper-title-link"
-        href="{{ paper.landing_url }}"
-        rel="noopener noreferrer"
-        target="_blank"
-        >{{ paper.title }}</a
-      >
-      {% else %}
-      {{ paper.title }}
-      {% endif %}
+      <span class="paper-title-hover" data-abstract="{{ paper.abstract | e }}">
+        {% if paper.landing_url %}
+        <a
+          class="paper-title-link"
+          href="{{ paper.landing_url }}"
+          rel="noopener noreferrer"
+          target="_blank"
+          >{{ paper.title }}</a
+        >
+        {% else %}
+        {{ paper.title }}
+        {% endif %}
+      </span>
     </h2>
     {% if paper.venue or paper.published_at or paper.cited_by_count is not none %}
     <p class="paper-meta">

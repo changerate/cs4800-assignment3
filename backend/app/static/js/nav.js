@@ -112,6 +112,7 @@
     const currentShell = document.querySelector(".shell");
     if (!nextShell || !currentShell) return false;
     currentShell.replaceWith(nextShell);
+    document.dispatchEvent(new CustomEvent("papershell:updated"));
     const nextTitle = nextDoc.querySelector("title");
     if (nextTitle) document.title = nextTitle.textContent || document.title;
     return true;
