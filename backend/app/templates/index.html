@@ -4,33 +4,36 @@
 <div class="shell">
   {% include "partials/sidebar.html" %}
   <main class="feed-main">
-    <header class="feed-header">
-      <h1 class="feed-title">{{ feed_title or "Latest in the literature" }}</h1>
-      <p class="feed-lede">
-        {% if feed_lede %}
-        {{ feed_lede }}
-        {% elif active_topic %}
-        Showing <strong>{{ active_topic }}</strong> highlights from the shared
-        catalog. <a href="{{ url_for('web.index') }}">Clear filter</a>.
-        {% elif filter_field and filter_subfield_other %}
-        Showing papers in <strong>{{ filter_field }}</strong> with a general catalog label
-        (no specific sub-area). <a href="{{ url_for('web.index') }}">Clear filter</a>.
-        {% elif filter_field and filter_subfield %}
-        Showing <strong>{{ filter_subfield }}</strong> within {{ filter_field }}.
-        <a href="{{ url_for('web.index') }}">Clear filter</a>.
-        {% elif filter_field %}
-        Showing all papers grouped under <strong>{{ filter_field }}</strong>.
-        <a href="{{ url_for('web.index') }}">Clear filter</a>.
-        {% else %}
-        For the endlessly curious.
+    <header class="feed-header feed-header--toolbar">
+      <div class="feed-header-main">
+        <h1 class="feed-title">{{ feed_title or "Latest in the literature" }}</h1>
+        <p class="feed-lede">
+          {% if feed_lede %}
+          {{ feed_lede }}
+          {% elif active_topic %}
+          Showing <strong>{{ active_topic }}</strong> highlights from the shared
+          catalog. <a href="{{ url_for('web.index') }}">Clear filter</a>.
+          {% elif filter_field and filter_subfield_other %}
+          Showing papers in <strong>{{ filter_field }}</strong> with a general catalog label
+          (no specific sub-area). <a href="{{ url_for('web.index') }}">Clear filter</a>.
+          {% elif filter_field and filter_subfield %}
+          Showing <strong>{{ filter_subfield }}</strong> within {{ filter_field }}.
+          <a href="{{ url_for('web.index') }}">Clear filter</a>.
+          {% elif filter_field %}
+          Showing all papers grouped under <strong>{{ filter_field }}</strong>.
+          <a href="{{ url_for('web.index') }}">Clear filter</a>.
+          {% else %}
+          For the endlessly curious.
+          {% endif %}
+        </p>
+        {% if related_source %}
+        <p class="feed-related-source">
+          Based on <em>{{ related_source.title }}</em>.
+          <a href="{{ url_for('web.index') }}">Back to latest feed</a>
+        </p>
         {% endif %}
-      </p>
-      {% if related_source %}
-      <p class="feed-related-source">
-        Based on <em>{{ related_source.title }}</em>.
-        <a href="{{ url_for('web.index') }}">Back to latest feed</a>
-      </p>
-      {% endif %}
+      </div>
+      {% include "partials/about_header_link.html" %}
     </header>
     <div class="paper-feed" role="feed">
       {% for paper in papers %}

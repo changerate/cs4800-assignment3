@@ -5,9 +5,12 @@
 <div class="shell">
   {% include "partials/sidebar.html" %}
   <main class="feed-main discover-page">
-    <header class="feed-header discover-header">
-      <h1 class="feed-title">Load From API</h1>
-      <p class="feed-lede">Developer utility: find works in OpenAlex and save them to the catalog (same rows as Home and the JSON API).</p>
+    <header class="feed-header discover-header feed-header--toolbar">
+      <div class="feed-header-main">
+        <h1 class="feed-title">Load From API</h1>
+        <p class="feed-lede">Developer utility: find works in OpenAlex and save them to the catalog (same rows as Home and the JSON API).</p>
+      </div>
+      {% include "partials/about_header_link.html" %}
     </header>
 
     <div class="discover-sheet-backdrop" data-discover-backdrop aria-hidden="true" tabindex="-1"></div>

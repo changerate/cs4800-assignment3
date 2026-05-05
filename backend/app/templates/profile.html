@@ -4,9 +4,12 @@
 <div class="shell">
   {% include "partials/sidebar.html" %}
   <main class="feed-main">
-    <header class="profile-header">
-      <p class="profile-eyebrow">Your account</p>
-      <h1 class="feed-title"><span class="icon-label"><i class="bi bi-person-circle" aria-hidden="true"></i><span>{{ user.username }}</span></span></h1>
+    <header class="profile-header feed-header--toolbar">
+      <div class="feed-header-main">
+        <p class="profile-eyebrow">Your account</p>
+        <h1 class="feed-title"><span class="icon-label"><i class="bi bi-person-circle" aria-hidden="true"></i><span>{{ user.username }}</span></span></h1>
+      </div>
+      {% include "partials/about_header_link.html" %}
     </header>
 
     <section class="profile-grid" aria-label="Profile details">

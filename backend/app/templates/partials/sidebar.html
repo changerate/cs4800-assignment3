@@ -30,6 +30,12 @@
     {% endif %}
   </nav>
 
+  <a
+    href="{{ url_for('web.about') }}"
+    class="sidebar-link sidebar-about {% if page == 'about' %}is-active{% endif %}"
+    ><span class="icon-label"><i class="bi bi-info-circle" aria-hidden="true"></i><span>About</span></span></a
+  >
+
   {% if page == 'home' %}
   {% with heading_id="filter-heading" %}{% include "partials/topic_filters.html" %}{% endwith %}
   {% endif %}

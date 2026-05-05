@@ -51,6 +51,7 @@ code { font-size: .86em; padding: .1rem .35rem; background: #ebe6dc; border: 1px
 .sidebar-link .bi { font-size: .78em; color: var(--ink-soft); line-height: 1; }
 .sidebar-link.is-active { color: var(--ink); border-bottom-color: var(--line-strong); }
 .sidebar-link.is-active .bi { color: var(--accent); }
+.sidebar-about { margin-bottom: 1.5rem; }
 .sidebar-heading { margin: 0 0 .8rem; color: var(--ink-soft); font-size: .69rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; }
 .sidebar-filters-intro { margin: 0 0 .8rem; color: var(--ink-soft); font-size: .8rem; line-height: 1.4; }
 
@@ -103,6 +104,45 @@ code { font-size: .86em; padding: .1rem .35rem; background: #ebe6dc; border: 1px
 .feed-header {
   margin-bottom: 2.4rem;
   max-width: 76ch;
+}
+
+.feed-header--toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: none;
+}
+.feed-header--toolbar .feed-header-main {
+  min-width: 0;
+  flex: 1;
+  max-width: 76ch;
+}
+.about-header-link {
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.35rem;
+  background: rgba(248, 245, 239, 0.65);
+  color: var(--ink-soft);
+  text-decoration: none;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.about-header-link:hover {
+  border-color: var(--accent-soft);
+  color: var(--accent);
+  background: rgba(255, 252, 247, 0.92);
+}
+.about-header-link .bi {
+  font-size: 1.15rem;
+  line-height: 1;
 }
 .feed-title { margin: 0; font-family: var(--serif); font-size: clamp(1.8rem, 2.5vw, 2.5rem); line-height: .97; letter-spacing: -.03em; font-weight: 600; }
 .feed-lede { margin: 1rem 0 0; font-size: 1.03rem; color: var(--ink-soft); max-width: 62ch; }
@@ -224,6 +264,7 @@ code { font-size: .86em; padding: .1rem .35rem; background: #ebe6dc; border: 1px
 .auth-grid { display: grid; gap: 1.1rem; grid-template-columns: minmax(0, 480px); }
 .auth-card, .profile-card, .discover-panel { border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line); padding: 1rem 0; background: transparent; }
 .auth-card { border-top: none; border-bottom: none; }
+.auth-card .auth-form:first-child { margin-top: 0.35rem; }
 .auth-card-title, .profile-card-title { margin: 0; font-family: var(--serif); font-size: 1.28rem; }
 .auth-card > .auth-card-title { margin-bottom: 0.65rem; }
 .auth-card-subtitle, .discover-intro, .profile-muted, .discover-hint, .discover-meta { color: var(--ink-soft); font-size: .9rem; }

@@ -4,6 +4,13 @@
 <div class="shell">
   {% include "partials/sidebar.html" %}
   <main class="feed-main">
+    <header class="profile-header feed-header--toolbar auth-header-strip">
+      <div class="feed-header-main">
+        <h1 class="feed-title">{% if mode == "signup" %}Sign up{% else %}Log in{% endif %}</h1>
+      </div>
+      {% include "partials/about_header_link.html" %}
+    </header>
+
     {% if error %}
     <p class="auth-alert" role="alert">{{ error }}</p>
     {% endif %}
@@ -14,7 +21,6 @@
     <section class="auth-grid" aria-label="Authentication">
       {% if mode == "signup" %}
       <article class="auth-card">
-        <h1 class="auth-card-title">Sign up</h1>
         <form method="post" action="{{ url_for('web.signup') }}" class="auth-form">
           <label for="signup-username">Username</label>
           <input
@@ -55,7 +61,6 @@
       </article>
       {% else %}
       <article class="auth-card">
-        <h1 class="auth-card-title">Log in</h1>
         <form method="post" action="{{ url_for('web.login_page') }}" class="auth-form">
           <input type="hidden" name="next" value="{{ next_path }}" />
 

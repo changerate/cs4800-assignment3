@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 import json
+import random
 import time
 
 from flask import current_app, jsonify, redirect, render_template, request, session, url_for
@@ -265,6 +266,17 @@ def discover():
     )
 
 
+@bp.get("/about")
+def about():
+    user = _get_authenticated_user()
+    return render_template(
+        "about.html",
+        **_sidebar_topics_context(),
+        page="about",
+        is_authenticated=user is not None,
+    )
+
+
 @bp.get("/")
 def index():
     # region agent log
@@ -303,6 +315,8 @@ def index():
         subfield=None if topic else subfield,
         subfield_unclassified=False if topic else subfield_unclassified,
     ).all()
+    if not topic and not field and not raw_sub:
+        random.shuffle(papers)
     user = _get_authenticated_user()
     saved_ids = _saved_paper_ids(user)
     # region agent log

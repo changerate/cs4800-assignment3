@@ -1,0 +1,9 @@
+{% if page != "about" %}
+<a
+  href="{{ url_for('web.about') }}"
+  class="about-header-link mobile-only-control"
+  aria-label="About"
+>
+  <i class="bi bi-info-circle" aria-hidden="true"></i>
+</a>
+{% endif %}
